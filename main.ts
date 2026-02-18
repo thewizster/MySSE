@@ -160,8 +160,8 @@ function serveHomePage(): Response {
     :root {
       --bg: #0a0a0a;
       --fg: #fafafa;
-      --accent: #6366f1;
-      --accent-hover: #818cf8;
+      --accent: #4b4eff;
+      --accent-hover: #5457ff;
       --border: #27272a;
       --muted: #71717a;
     }
@@ -185,7 +185,7 @@ function serveHomePage(): Response {
     h1 {
       font-size: 2.5rem;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      background: linear-gradient(135deg, var(--accent), #4b4eff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -322,6 +322,14 @@ function serveHomePage(): Response {
       color: var(--muted);
       font-size: 0.875rem;
     }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      margin-top: 3rem;
+      padding: 1.5rem 0;
+      border-top: 1px solid var(--border);
+    }
   </style>
 </head>
 <body>
@@ -342,22 +350,26 @@ function serveHomePage(): Response {
 
     <div class="features">
       <div class="feature">
-        <h3>⚡ Blazing Fast</h3>
-        <p>100% in-memory search with pre-normalized embeddings</p>
+        <h3>⚡ HNSW + Brute-Force</h3>
+        <p>Exact search under 2k docs, automatic HNSW approximate indexing above — always in RAM</p>
       </div>
       <div class="feature">
-        <h3>🧠 AI-Powered</h3>
-        <p>Transformers.js embeddings with WebGPU acceleration</p>
+        <h3>🧠 Semantic Search</h3>
+        <p>Pluggable embedding models — deterministic hash built-in, Transformers.js ready</p>
       </div>
       <div class="feature">
-        <h3>🔒 Secure</h3>
-        <p>Deno's secure-by-default runtime with minimal permissions</p>
+        <h3>🔒 Pure Deno</h3>
+        <p>Secure-by-default runtime, zero external dependencies, no disk I/O</p>
       </div>
       <div class="feature">
         <h3>📦 Minimal</h3>
-        <p>Zero external databases, pure TypeScript, ~200 LOC core</p>
+        <p>~550 LOC core, pure TypeScript, JSON API — nothing else needed</p>
       </div>
     </div>
+
+    <footer>
+      &copy; 2026 Raymond Brady. All Rights Reserved. | Built with ❤️ in Texas. The LUMOS Initiative.
+    </footer>
   </div>
 
   <script>
