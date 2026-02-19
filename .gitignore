@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Deno
+.deno/
+
+# npm / package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ONNX model cache (downloaded at runtime by @huggingface/transformers)
+.cache/
+
+# Build output
+dist/
+out/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
