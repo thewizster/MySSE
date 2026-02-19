@@ -1,4 +1,4 @@
-# MySSE - In-Memory Semantic Search Engine
+# MySSE - My Semantic Search Engine
 
 A fully in-RAM semantic search engine built with **Deno** in pure TypeScript —
 minimalist, elegant, blazing-fast, and built for 2026+.
