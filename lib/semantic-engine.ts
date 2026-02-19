@@ -122,10 +122,14 @@ class SimpleEmbeddingModel implements EmbeddingModel {
 }
 
 // Transformers.js embedding model (for production use)
-// Uncomment and use when npm registry is available:
-/*
-import { pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
+// uncomment import and use when npm registry is available:
+// import { pipeline, type FeatureExtractionPipeline } from "npm:@huggingface/transformers";
 
+// Set nodeModulesDir in deno.json for npm support
+// "nodeModulesDir": "auto",
+
+// Uncomment and use this class when you have @huggingface/transformers available in your environment.
+/*
 class TransformersJsEmbedding implements EmbeddingModel {
   private model: FeatureExtractionPipeline | null = null;
   private modelLoading: Promise<void> | null = null;
@@ -145,12 +149,23 @@ class TransformersJsEmbedding implements EmbeddingModel {
     }
     this.modelLoading = (async () => {
       console.log("🔄 Loading embedding model (one-time)...");
-      this.model = await pipeline(
-        "feature-extraction",
-        "Xenova/all-MiniLM-L6-v2",
-        { device: "auto", dtype: "fp32" }
-      );
-      console.log("✅ Model loaded successfully");
+      const maxRetries = 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          this.model = await pipeline(
+            "feature-extraction",
+            "Xenova/all-MiniLM-L6-v2",
+            { device: "auto", dtype: "fp32" }
+          ) as FeatureExtractionPipeline;
+          console.log("✅ Model loaded successfully");
+          return;
+        } catch (e) {
+          console.warn(`⚠️ Model load attempt ${attempt}/${maxRetries} failed: ${e}`);
+          if (attempt === maxRetries) throw e;
+          // Wait before retrying — gives the file download time to complete
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+        }
+      }
     })();
     await this.modelLoading;
   }
