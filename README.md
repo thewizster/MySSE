@@ -11,16 +11,14 @@ minimalist, elegant, blazing-fast, and built for 2026+.
 - **HNSW Indexing**: Pure-TypeScript implementation of the 2016 Malkov &
   Yashunin paper — automatic approximate nearest-neighbor search above 2 000
   documents, exact brute-force below
-- **Adaptive Search**: Brute-force (recall = 100%) when the index is small; HNSW
-  (recall@10 ≥ 92%, 4–6× faster) when it grows — fully automatic, no config
-  needed
-- **Hybrid Search**: Fuse semantic (dense) and BM25 keyword (sparse) results via
-  Reciprocal Rank Fusion — `GET /api/hybrid-search?alpha=0.5`
+- **Adaptive Search**: Brute-force (recall = 100%) when the index is small;
+  HNSW (recall@10 ≥ 92%, 4–6× faster) when it grows — fully automatic, no
+  config needed
 - **AI-Ready**: Pluggable embedding interface (deterministic hash-based
   included, Transformers.js ready)
 - **Type-Safe**: Pure TypeScript end-to-end, zero external dependencies
 - **Secure**: Deno's secure-by-default runtime
-- **Minimal**: ~800 LOC core across two files, JSON API
+- **Minimal**: ~550 LOC core across two files, JSON API
 
 ## 🚀 Quick Start
 
@@ -90,30 +88,6 @@ curl "http://localhost:8000/api/search?q=secure+typescript+runtime&k=5"
 
 ![Search Results](https://github.com/user-attachments/assets/3ba82fe8-bd61-481a-ab7a-759f38c6988f)
 
-### Hybrid Search
-
-```bash
-GET /api/hybrid-search?q=<query>&k=<top_k>&alpha=<0-1>
-```
-
-Fuses semantic (dense vector) and BM25 keyword (sparse) retrieval using
-**Reciprocal Rank Fusion (RRF)**.
-
-**Parameters:**
-
-- `q` (required): The search query
-- `k` (optional): Number of results to return (default: 10, max: 100)
-- `alpha` (optional): Blend weight in `[0, 1]` (default: `0.5`)
-  - `1.0` = pure semantic search
-  - `0.0` = pure keyword (BM25) search
-  - `0.5` = equal blend (recommended default)
-
-**Example:**
-
-```bash
-curl "http://localhost:8000/api/hybrid-search?q=typescript+runtime&k=5&alpha=0.5"
-```
-
 ### Check Status
 
 ```bash
@@ -153,8 +127,8 @@ MySSE/
 3. **Storage**: Embeddings stored as `Float32Array` for cache-friendly access
 4. **Indexing**: Vectors are inserted into an HNSW graph (built incrementally on
    `add()`)
-5. **Search**: Under 2 000 docs → exact brute-force dot product; above → HNSW
-   approximate search with O(log n) query time
+5. **Search**: Under 2 000 docs → exact brute-force dot product; above →
+   HNSW approximate search with O(log n) query time
 
 ### HNSW Index
 
@@ -210,8 +184,8 @@ deno task test     # Run tests
 
 ## 📚 Getting Started Guide
 
-See [GETTING-STARTED.md](GETTING-STARTED.md) for a beginner-friendly walkthrough
-on adding semantic search to your project with MySSE.
+See [GETTING-STARTED.md](GETTING-STARTED.md) for a beginner-friendly
+walkthrough on adding semantic search to your project with MySSE.
 
 ## 📄 License
 

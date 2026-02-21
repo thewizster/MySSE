@@ -33,10 +33,6 @@ async function handleRequest(req: Request): Promise<Response> {
       return await handleSearch(url, corsHeaders);
     }
 
-    if (path === "/api/hybrid-search" && method === "GET") {
-      return await handleHybridSearch(url, corsHeaders);
-    }
-
     if (path === "/api/status" && method === "GET") {
       return handleStatus(corsHeaders);
     }
@@ -129,47 +125,6 @@ async function handleSearch(
     results,
     count: results.length,
     total_documents: engine.size,
-  }, { headers: corsHeaders });
-}
-
-// GET /api/hybrid-search - Hybrid semantic + keyword search
-async function handleHybridSearch(
-  url: URL,
-  corsHeaders: Record<string, string>,
-): Promise<Response> {
-  const query = url.searchParams.get("q");
-  const topK = parseInt(url.searchParams.get("k") ?? "10", 10);
-  const alpha = parseFloat(url.searchParams.get("alpha") ?? "0.5");
-
-  if (!query || query.trim().length === 0) {
-    return Response.json(
-      { error: "Missing or empty query parameter '?q='" },
-      { status: 400, headers: corsHeaders },
-    );
-  }
-
-  if (isNaN(topK) || topK < 1 || topK > 100) {
-    return Response.json(
-      { error: "Parameter 'k' must be a number between 1 and 100" },
-      { status: 400, headers: corsHeaders },
-    );
-  }
-
-  if (isNaN(alpha) || alpha < 0 || alpha > 1) {
-    return Response.json(
-      { error: "Parameter 'alpha' must be a number between 0 and 1" },
-      { status: 400, headers: corsHeaders },
-    );
-  }
-
-  const results = await engine.hybridSearch(query, topK, alpha);
-
-  return Response.json({
-    query,
-    results,
-    count: results.length,
-    total_documents: engine.size,
-    alpha,
   }, { headers: corsHeaders });
 }
 
@@ -407,12 +362,8 @@ function serveHomePage(): Response {
         <p>Secure-by-default runtime, zero external dependencies, no disk I/O</p>
       </div>
       <div class="feature">
-        <h3>🔀 Hybrid Search</h3>
-        <p>Fuse semantic + BM25 keyword results via RRF — <code>GET /api/hybrid-search?alpha=0.5</code></p>
-      </div>
-      <div class="feature">
         <h3>📦 Minimal</h3>
-        <p>~800 LOC core, pure TypeScript, JSON API — nothing else needed</p>
+        <p>~550 LOC core, pure TypeScript, JSON API — nothing else needed</p>
       </div>
     </div>
 

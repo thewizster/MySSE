@@ -146,8 +146,8 @@ you'll see scores in the 0.6–0.95 range and much stronger semantic matching �
 "forgot my login credentials" will rank "How to reset your password" clearly
 first.
 
-**Bottom line**: use the built-in embeddings for development and testing. Plug
-in a real model when you're ready for production.
+**Bottom line**: use the built-in embeddings for development and testing. Plug in
+a real model when you're ready for production.
 
 You can also try searching from the web UI at `http://localhost:8000`.
 
@@ -173,14 +173,12 @@ await fetch("http://localhost:8000/api/add", {
 
 // Search
 const res = await fetch(
-  "http://localhost:8000/api/search?q=stop+paying&k=5",
+  "http://localhost:8000/api/search?q=stop+paying&k=5"
 );
 const data = await res.json();
 
 for (const result of data.results) {
-  console.log(
-    `${result.id}: ${result.content} (${(result.score * 100).toFixed(1)}%)`,
-  );
+  console.log(`${result.id}: ${result.content} (${(result.score * 100).toFixed(1)}%)`);
 }
 ```
 
@@ -209,12 +207,12 @@ for result in response.json()["results"]:
 
 ## 6. Useful API Endpoints
 
-| Endpoint            | Method   | What it does                        |
-| ------------------- | -------- | ----------------------------------- |
-| `/api/add`          | `POST`   | Add one or more documents           |
-| `/api/search?q=...` | `GET`    | Search documents by meaning         |
-| `/api/status`       | `GET`    | Check health and document count     |
-| `/api/clear`        | `DELETE` | Remove all documents from the index |
+| Endpoint             | Method   | What it does                          |
+| -------------------- | -------- | ------------------------------------- |
+| `/api/add`           | `POST`   | Add one or more documents             |
+| `/api/search?q=...`  | `GET`    | Search documents by meaning           |
+| `/api/status`        | `GET`    | Check health and document count       |
+| `/api/clear`         | `DELETE` | Remove all documents from the index   |
 
 ---
 
@@ -222,9 +220,9 @@ for result in response.json()["results"]:
 
 You don't need to configure anything — MySSE picks the best strategy for you:
 
-| Document Count | Search Method          | What It Means                                                              |
-| -------------- | ---------------------- | -------------------------------------------------------------------------- |
-| ≤ 2 000        | **Brute-force**        | Compares your query to every document. Perfect accuracy.                   |
+| Document Count | Search Method     | What It Means                           |
+| -------------- | ----------------- | --------------------------------------- |
+| ≤ 2 000        | **Brute-force**   | Compares your query to every document. Perfect accuracy. |
 | > 2 000        | **HNSW (approximate)** | Uses a graph-based index for much faster search. Accuracy stays above 92%. |
 
 The switch happens automatically. If you add your 2 001st document, the next
@@ -240,10 +238,10 @@ customize the behavior:
 import { SemanticEngine } from "./lib/semantic-engine.ts";
 
 const engine = SemanticEngine.getInstance({
-  useANN: true, // set to false to always use brute-force
-  annThreshold: 5000, // switch to HNSW above this many documents
-  m: 16, // HNSW connections per node (higher = better recall, more RAM)
-  efSearch: 128, // HNSW search beam width (higher = better recall, slower)
+  useANN: true,         // set to false to always use brute-force
+  annThreshold: 5000,   // switch to HNSW above this many documents
+  m: 16,                // HNSW connections per node (higher = better recall, more RAM)
+  efSearch: 128,        // HNSW search beam width (higher = better recall, slower)
 });
 ```
 
@@ -297,5 +295,5 @@ it.
 
 ---
 
-_© 2026 Raymond Brady. All Rights Reserved. The LUMOS Initiative. Built with ❤️
-in Texas._
+*© 2026 Raymond Brady. All Rights Reserved. The LUMOS Initiative. Built with
+❤️ in Texas.*

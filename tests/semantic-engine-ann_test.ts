@@ -205,15 +205,11 @@ Deno.test("SemanticEngine ANN - latency ≥ 5× faster than brute-force at 10000
 
   const speedup = bfTime / annTime;
   console.log(
-    `  brute-force: ${bfTime.toFixed(1)}ms, ANN: ${
-      annTime.toFixed(1)
-    }ms, speedup: ${speedup.toFixed(1)}×`,
+    `  brute-force: ${bfTime.toFixed(1)}ms, ANN: ${annTime.toFixed(1)}ms, speedup: ${speedup.toFixed(1)}×`,
   );
   assert(
     speedup >= 4,
-    `HNSW should be ≥ 4× faster than brute-force at ${N} docs, got ${
-      speedup.toFixed(1)
-    }×`,
+    `HNSW should be ≥ 4× faster than brute-force at ${N} docs, got ${speedup.toFixed(1)}×`,
   );
 
   // Cleanup
