@@ -38,7 +38,7 @@ async function handleRequest(req: Request): Promise<Response> {
     }
 
     if (path === "/api/clear" && method === "DELETE") {
-      return handleClear(corsHeaders);
+      return await handleClear(corsHeaders);
     }
 
     // Serve home page
@@ -133,14 +133,17 @@ function handleStatus(corsHeaders: Record<string, string>): Response {
   return Response.json({
     status: "healthy",
     documents: engine.size,
+    powers: engine.powers,
     timestamp: new Date().toISOString(),
   }, { headers: corsHeaders });
 }
 
 // DELETE /api/clear - Clear all documents
-function handleClear(corsHeaders: Record<string, string>): Response {
+async function handleClear(
+  corsHeaders: Record<string, string>,
+): Promise<Response> {
   const previousSize = engine.size;
-  engine.clear();
+  await engine.clear();
   return Response.json({
     success: true,
     cleared: previousSize,
