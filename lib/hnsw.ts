@@ -4,8 +4,8 @@
 type Vector = Float32Array;
 type Neighbor = { id: string; dist: number };
 
-const DEFAULT_M = 16;          // max connections per layer (paper §4.1, suggests 5–48)
-const EF_CONSTRUCTION = 40;   // higher = better recall, slower build
+const DEFAULT_M = 16; // max connections per layer (paper §4.1, suggests 5–48)
+const EF_CONSTRUCTION = 40; // higher = better recall, slower build
 
 function cosineDistance(a: Vector, b: Vector): number {
   let dot = 0;
@@ -16,13 +16,13 @@ function cosineDistance(a: Vector, b: Vector): number {
 class HNSW {
   private layers: Map<string, Set<string>[]> = new Map(); // id → per-layer neighbor sets
   private vectors: Map<string, Vector> = new Map();
-  private nodeLevel: Map<string, number> = new Map();     // id → assigned level
+  private nodeLevel: Map<string, number> = new Map(); // id → assigned level
   private enterPoint: string | null = null;
   private maxLayer = 0;
 
-  private readonly mMax: number;   // max neighbors for layers ≥ 1
-  private readonly mMax0: number;  // max neighbors for layer 0 (paper §4.1: 2·M)
-  private readonly mL: number;    // level multiplier = 1/ln(M)  (paper Algorithm 1)
+  private readonly mMax: number; // max neighbors for layers ≥ 1
+  private readonly mMax0: number; // max neighbors for layer 0 (paper §4.1: 2·M)
+  private readonly mL: number; // level multiplier = 1/ln(M)  (paper Algorithm 1)
 
   constructor(private dim: number, private m: number = DEFAULT_M) {
     this.mMax = m;
@@ -39,10 +39,10 @@ class HNSW {
   private selectNeighborsSimple(
     _query: Vector,
     candidates: Neighbor[],
-    k: number
+    k: number,
   ): string[] {
     candidates.sort((a, b) => a.dist - b.dist);
-    return candidates.slice(0, k).map(c => c.id);
+    return candidates.slice(0, k).map((c) => c.id);
   }
 
   // Algorithm 2: SEARCH-LAYER
@@ -50,10 +50,10 @@ class HNSW {
     q: Vector,
     ep: string[],
     ef: number,
-    layer: number
+    layer: number,
   ): Neighbor[] {
     const visited = new Set<string>(ep);
-    const found: Neighbor[] = ep.map(id => ({
+    const found: Neighbor[] = ep.map((id) => ({
       id,
       dist: cosineDistance(q, this.vectors.get(id)!),
     }));
@@ -98,7 +98,10 @@ class HNSW {
     const nodeVec = this.vectors.get(nodeId)!;
     const scored: Neighbor[] = [];
     for (const nid of neighbors) {
-      scored.push({ id: nid, dist: cosineDistance(nodeVec, this.vectors.get(nid)!) });
+      scored.push({
+        id: nid,
+        dist: cosineDistance(nodeVec, this.vectors.get(nid)!),
+      });
     }
     const kept = this.selectNeighborsSimple(nodeVec, scored, maxConn);
     neighbors.clear();
@@ -163,7 +166,11 @@ class HNSW {
   }
 
   // Algorithm 5: K-NN-SEARCH
-  search(query: Vector, k = 10, efSearch = 64): { id: string; score: number }[] {
+  search(
+    query: Vector,
+    k = 10,
+    efSearch = 64,
+  ): { id: string; score: number }[] {
     if (!this.enterPoint) return [];
 
     let ep = [this.enterPoint];
@@ -180,7 +187,7 @@ class HNSW {
 
     return results
       .slice(0, k)
-      .map(n => ({ id: n.id, score: 1 - n.dist }));
+      .map((n) => ({ id: n.id, score: 1 - n.dist }));
   }
 
   // Remove a vector from the index
@@ -213,7 +220,10 @@ class HNSW {
         let bestId: string | null = null;
         let bestLevel = -1;
         for (const [nid, nl] of this.nodeLevel) {
-          if (nl > bestLevel) { bestLevel = nl; bestId = nid; }
+          if (nl > bestLevel) {
+            bestLevel = nl;
+            bestId = nid;
+          }
         }
         this.enterPoint = bestId;
         this.maxLayer = bestLevel;
