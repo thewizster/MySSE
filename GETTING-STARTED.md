@@ -251,7 +251,72 @@ For most users, the defaults work great.
 
 ---
 
-## 8. Persisting Your Index
+## 8. Supercharge with Powers
+
+Powers are optional plugins that extend what the search engine can do — without
+modifying any core code. You register a Power with `engine.use()` and the engine
+calls it automatically at the right point in the pipeline.
+
+MySSE ships with four built-in Powers:
+
+| Power              | What it does                                                  |
+| ------------------ | ------------------------------------------------------------- |
+| **QueryCache**     | Caches search results so repeated queries are instant         |
+| **HybridSearch**   | Blends keyword (BM25) and semantic search for better results  |
+| **MetadataFilter** | Filters results by document metadata (e.g. published, source) |
+| **EmbeddingSwap**  | Hot-swaps the embedding model at runtime                      |
+
+### Quick example — add caching
+
+If you're using MySSE as a library (importing `SemanticEngine` directly), you
+can enable Powers in a few lines:
+
+```ts
+import { engine } from "./lib/semantic-engine.ts";
+import { QueryCache } from "./lib/powers/cache.ts";
+
+// Cache search results for 30 seconds, up to 200 queries
+engine.use(QueryCache({ maxSize: 200, ttl: 30_000 }));
+```
+
+That's it — every `engine.search()` call now checks the cache first.
+
+### Stack multiple Powers
+
+Powers compose naturally. Register them in order and the engine chains them:
+
+```ts
+import { engine } from "./lib/semantic-engine.ts";
+import { QueryCache } from "./lib/powers/cache.ts";
+import { HybridSearch } from "./lib/powers/hybrid-search.ts";
+import { MetadataFilter } from "./lib/powers/metadata-filter.ts";
+
+engine.use(QueryCache({ ttl: 30_000 }));
+engine.use(HybridSearch({ alpha: 0.6 }));    // 60% semantic, 40% keyword
+engine.use(MetadataFilter((m) => m.published === true));
+```
+
+Now every search: checks the cache → runs semantic + BM25 keyword fusion →
+filters out unpublished docs → caches the result.
+
+### Managing Powers
+
+```ts
+// See what's registered
+console.log(engine.powers);  // ["QueryCache", "HybridSearch", "MetadataFilter"]
+
+// Remove one by name
+engine.eject("MetadataFilter");
+
+// The /api/status endpoint also lists active Powers
+```
+
+For the full Power hook reference and how to write your own, see the
+[README](README.md#-powers-plugin-system).
+
+---
+
+## 9. Persisting Your Index
 
 MySSE is 100% in-memory, so your documents disappear when the server restarts.
 To save and restore them, use the export/import feature:
@@ -270,10 +335,10 @@ engine.fromJSON(saved);
 
 ---
 
-## 9. Running Tests
+## 10. Running Tests
 
-MySSE comes with a full test suite — 33 tests covering the search engine, the
-HNSW index, recall quality, and latency benchmarks:
+MySSE comes with a full test suite covering the search engine, the HNSW index,
+recall quality, latency benchmarks, and the Powers system:
 
 ```bash
 deno task test
@@ -281,7 +346,7 @@ deno task test
 
 ---
 
-## 10. What's Next?
+## 11. What's Next?
 
 Now that you have semantic search running, here are some ideas:
 
@@ -291,9 +356,13 @@ Now that you have semantic search running, here are some ideas:
 - **Search your notes**: Import your markdown files and find things by meaning
 - **Product search**: Let customers describe what they want instead of filtering
   by category
+- **Add caching and hybrid search**: Register the built-in Powers to boost
+  performance and result quality with just a few lines of code
+- **Write your own Power**: Build a custom plugin — logging, rate-limiting,
+  result enrichment — whatever your app needs
 
-The API is simple on purpose. Start small, add documents, search them. That's
-it.
+The API is simple on purpose. Start small, add documents, search them, layer on
+Powers when you're ready. That's it.
 
 ---
 
