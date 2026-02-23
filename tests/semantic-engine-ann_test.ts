@@ -68,7 +68,7 @@ Deno.test("SemanticEngine ANN - recall@10 ≥ 0.92 on 5000-doc dataset", async (
   // Use a fresh instance with a low threshold so HNSW kicks in
   SemanticEngine.resetInstance();
   const eng = SemanticEngine.getInstance({ useANN: true, annThreshold: 100 });
-  eng.clear();
+  await eng.clear();
 
   const rng = xorshift32(42);
   const N = 5000;
@@ -100,7 +100,7 @@ Deno.test("SemanticEngine ANN - recall@10 ≥ 0.92 on 5000-doc dataset", async (
   // We use a brute-force engine for ground truth
   SemanticEngine.resetInstance();
   const bfEng = SemanticEngine.getInstance({ useANN: false });
-  bfEng.clear();
+  await bfEng.clear();
   await bfEng.add(docs);
 
   const queries = [
@@ -149,8 +149,8 @@ Deno.test("SemanticEngine ANN - recall@10 ≥ 0.92 on 5000-doc dataset", async (
   );
 
   // Cleanup
-  eng.clear();
-  bfEng.clear();
+  await eng.clear();
+  await bfEng.clear();
   SemanticEngine.resetInstance();
 });
 
@@ -158,7 +158,7 @@ Deno.test("SemanticEngine ANN - latency ≥ 5× faster than brute-force at 10000
   // Build brute-force engine
   SemanticEngine.resetInstance();
   const bfEng = SemanticEngine.getInstance({ useANN: false });
-  bfEng.clear();
+  await bfEng.clear();
 
   const N = 10000;
   const docs = [];
@@ -176,7 +176,7 @@ Deno.test("SemanticEngine ANN - latency ≥ 5× faster than brute-force at 10000
     useANN: true,
     annThreshold: 100,
   });
-  annEng.clear();
+  await annEng.clear();
   await annEng.add(docs);
 
   // Warm up
@@ -205,16 +205,20 @@ Deno.test("SemanticEngine ANN - latency ≥ 5× faster than brute-force at 10000
 
   const speedup = bfTime / annTime;
   console.log(
-    `  brute-force: ${bfTime.toFixed(1)}ms, ANN: ${annTime.toFixed(1)}ms, speedup: ${speedup.toFixed(1)}×`,
+    `  brute-force: ${bfTime.toFixed(1)}ms, ANN: ${
+      annTime.toFixed(1)
+    }ms, speedup: ${speedup.toFixed(1)}×`,
   );
   assert(
     speedup >= 4,
-    `HNSW should be ≥ 4× faster than brute-force at ${N} docs, got ${speedup.toFixed(1)}×`,
+    `HNSW should be ≥ 4× faster than brute-force at ${N} docs, got ${
+      speedup.toFixed(1)
+    }×`,
   );
 
   // Cleanup
-  bfEng.clear();
-  annEng.clear();
+  await bfEng.clear();
+  await annEng.clear();
   SemanticEngine.resetInstance();
 });
 
@@ -224,7 +228,7 @@ Deno.test("SemanticEngine ANN - uses brute-force below threshold", async () => {
     useANN: true,
     annThreshold: 5000,
   });
-  eng.clear();
+  await eng.clear();
 
   // Add fewer docs than threshold
   const docs = [];
@@ -238,7 +242,7 @@ Deno.test("SemanticEngine ANN - uses brute-force below threshold", async () => {
   assertEquals(results.length, 5);
   assert(results[0].score > 0, "Should have positive similarity score");
 
-  eng.clear();
+  await eng.clear();
   SemanticEngine.resetInstance();
 });
 
@@ -248,7 +252,7 @@ Deno.test("SemanticEngine ANN - useANN=false always uses brute-force", async () 
     useANN: false,
     annThreshold: 10, // very low threshold — would use ANN if enabled
   });
-  eng.clear();
+  await eng.clear();
 
   const docs = [];
   for (let i = 0; i < 50; i++) {
@@ -261,7 +265,7 @@ Deno.test("SemanticEngine ANN - useANN=false always uses brute-force", async () 
   assertEquals(results.length, 5);
   assert(results[0].score > 0, "Should have positive similarity score");
 
-  eng.clear();
+  await eng.clear();
   SemanticEngine.resetInstance();
 });
 
@@ -271,7 +275,7 @@ Deno.test("SemanticEngine ANN - delete removes from HNSW index", async () => {
     useANN: true,
     annThreshold: 5, // low threshold so HNSW is active
   });
-  eng.clear();
+  await eng.clear();
 
   const docs = [];
   for (let i = 0; i < 20; i++) {
@@ -280,7 +284,7 @@ Deno.test("SemanticEngine ANN - delete removes from HNSW index", async () => {
   await eng.add(docs);
 
   // Delete a doc
-  const deleted = eng.delete("d5");
+  const deleted = await eng.delete("d5");
   assertEquals(deleted, true);
   assertEquals(eng.size, 19);
 
@@ -290,7 +294,7 @@ Deno.test("SemanticEngine ANN - delete removes from HNSW index", async () => {
     assert(r.id !== "d5", "Deleted doc should not appear in ANN results");
   }
 
-  eng.clear();
+  await eng.clear();
   SemanticEngine.resetInstance();
 });
 
@@ -300,7 +304,7 @@ Deno.test("SemanticEngine ANN - clear resets HNSW and allows re-add", async () =
     useANN: true,
     annThreshold: 5,
   });
-  eng.clear();
+  await eng.clear();
 
   const docs = [];
   for (let i = 0; i < 10; i++) {
@@ -309,7 +313,7 @@ Deno.test("SemanticEngine ANN - clear resets HNSW and allows re-add", async () =
   await eng.add(docs);
   assertEquals(eng.size, 10);
 
-  eng.clear();
+  await eng.clear();
   assertEquals(eng.size, 0);
 
   // Re-add with same IDs should not throw
@@ -319,7 +323,7 @@ Deno.test("SemanticEngine ANN - clear resets HNSW and allows re-add", async () =
   const results = await eng.search("content 3", 3);
   assertEquals(results.length, 3);
 
-  eng.clear();
+  await eng.clear();
   SemanticEngine.resetInstance();
 });
 
@@ -329,7 +333,7 @@ Deno.test("SemanticEngine ANN - fromJSON rebuilds HNSW index", async () => {
     useANN: true,
     annThreshold: 5,
   });
-  eng.clear();
+  await eng.clear();
 
   const docs = [];
   for (let i = 0; i < 20; i++) {
@@ -338,10 +342,10 @@ Deno.test("SemanticEngine ANN - fromJSON rebuilds HNSW index", async () => {
   await eng.add(docs);
 
   const exported = eng.toJSON();
-  eng.clear();
+  await eng.clear();
   assertEquals(eng.size, 0);
 
-  eng.fromJSON(exported);
+  await eng.fromJSON(exported);
   assertEquals(eng.size, 20);
 
   // Search should work after import (HNSW rebuilt)
@@ -349,6 +353,6 @@ Deno.test("SemanticEngine ANN - fromJSON rebuilds HNSW index", async () => {
   assertEquals(results.length, 5);
   assert(results[0].score > 0, "Should find results after JSON import");
 
-  eng.clear();
+  await eng.clear();
   SemanticEngine.resetInstance();
 });

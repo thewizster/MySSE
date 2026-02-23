@@ -19,7 +19,7 @@ function assertExists<T>(
 
 Deno.test("SemanticEngine - add and search documents", async () => {
   // Clear any existing documents
-  engine.clear();
+  await engine.clear();
   assertEquals(engine.size, 0);
 
   // Add test documents
@@ -46,7 +46,7 @@ Deno.test("SemanticEngine - add and search documents", async () => {
 });
 
 Deno.test("SemanticEngine - get document by ID", async () => {
-  engine.clear();
+  await engine.clear();
 
   await engine.add([
     {
@@ -67,7 +67,7 @@ Deno.test("SemanticEngine - get document by ID", async () => {
 });
 
 Deno.test("SemanticEngine - delete document", async () => {
-  engine.clear();
+  await engine.clear();
 
   await engine.add([
     { id: "to-delete", content: "This will be deleted" },
@@ -76,16 +76,16 @@ Deno.test("SemanticEngine - delete document", async () => {
 
   assertEquals(engine.size, 2);
 
-  const deleted = engine.delete("to-delete");
+  const deleted = await engine.delete("to-delete");
   assertEquals(deleted, true);
   assertEquals(engine.size, 1);
 
-  const notDeleted = engine.delete("non-existent");
+  const notDeleted = await engine.delete("non-existent");
   assertEquals(notDeleted, false);
 });
 
 Deno.test("SemanticEngine - clear all documents", async () => {
-  engine.clear();
+  await engine.clear();
 
   await engine.add([
     { id: "doc1", content: "First document" },
@@ -94,12 +94,12 @@ Deno.test("SemanticEngine - clear all documents", async () => {
 
   assertEquals(engine.size, 2);
 
-  engine.clear();
+  await engine.clear();
   assertEquals(engine.size, 0);
 });
 
 Deno.test("SemanticEngine - export and import JSON", async () => {
-  engine.clear();
+  await engine.clear();
 
   await engine.add([
     {
@@ -113,10 +113,10 @@ Deno.test("SemanticEngine - export and import JSON", async () => {
   assertEquals(exported.length, 1);
   assertEquals(exported[0][0], "export-doc");
 
-  engine.clear();
+  await engine.clear();
   assertEquals(engine.size, 0);
 
-  engine.fromJSON(exported);
+  await engine.fromJSON(exported);
   assertEquals(engine.size, 1);
 
   const doc = engine.get("export-doc");
@@ -125,14 +125,14 @@ Deno.test("SemanticEngine - export and import JSON", async () => {
 });
 
 Deno.test("SemanticEngine - empty search returns empty array", async () => {
-  engine.clear();
+  await engine.clear();
 
   const results = await engine.search("anything", 10);
   assertEquals(results.length, 0);
 });
 
 Deno.test("SemanticEngine - search respects topK limit", async () => {
-  engine.clear();
+  await engine.clear();
 
   await engine.add([
     { id: "doc1", content: "First document about programming" },

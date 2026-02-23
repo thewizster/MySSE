@@ -11,9 +11,9 @@ minimalist, elegant, blazing-fast, and built for 2026+.
 - **HNSW Indexing**: Pure-TypeScript implementation of the 2016 Malkov &
   Yashunin paper — automatic approximate nearest-neighbor search above 2 000
   documents, exact brute-force below
-- **Adaptive Search**: Brute-force (recall = 100%) when the index is small;
-  HNSW (recall@10 ≥ 92%, 4–6× faster) when it grows — fully automatic, no
-  config needed
+- **Adaptive Search**: Brute-force (recall = 100%) when the index is small; HNSW
+  (recall@10 ≥ 92%, 4–6× faster) when it grows — fully automatic, no config
+  needed
 - **AI-Ready**: Pluggable embedding interface (deterministic hash-based
   included, Transformers.js ready)
 - **Type-Safe**: Pure TypeScript end-to-end, zero external dependencies
@@ -127,8 +127,8 @@ MySSE/
 3. **Storage**: Embeddings stored as `Float32Array` for cache-friendly access
 4. **Indexing**: Vectors are inserted into an HNSW graph (built incrementally on
    `add()`)
-5. **Search**: Under 2 000 docs → exact brute-force dot product; above →
-   HNSW approximate search with O(log n) query time
+5. **Search**: Under 2 000 docs → exact brute-force dot product; above → HNSW
+   approximate search with O(log n) query time
 
 ### HNSW Index
 
@@ -184,8 +184,8 @@ deno task test     # Run tests
 
 ## 📚 Getting Started Guide
 
-See [GETTING-STARTED.md](GETTING-STARTED.md) for a beginner-friendly
-walkthrough on adding semantic search to your project with MySSE.
+See [GETTING-STARTED.md](GETTING-STARTED.md) for a beginner-friendly walkthrough
+on adding semantic search to your project with MySSE.
 
 ## 📄 License
 

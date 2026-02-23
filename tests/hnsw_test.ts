@@ -22,7 +22,10 @@ function assertThrows(fn: () => void, msg?: string): void {
     fn();
     throw new Error(msg ?? "Expected function to throw but it did not");
   } catch (e) {
-    if ((e as Error).message === (msg ?? "Expected function to throw but it did not")) {
+    if (
+      (e as Error).message ===
+        (msg ?? "Expected function to throw but it did not")
+    ) {
       throw e;
     }
   }
@@ -116,7 +119,11 @@ Deno.test("HNSW - nearest neighbor is correct for small set", () => {
   // Query with each axis vector; nearest should be itself
   for (let i = 0; i < DIM; i++) {
     const results = index.search(axisVec(i), 1);
-    assertEquals(results[0].id, `axis-${i}`, `Axis ${i} should be its own nearest neighbor`);
+    assertEquals(
+      results[0].id,
+      `axis-${i}`,
+      `Axis ${i} should be its own nearest neighbor`,
+    );
     assert(results[0].score > 0.99, "Score should be ~1.0 for exact match");
   }
 });
@@ -132,7 +139,9 @@ Deno.test("HNSW - search returns results sorted by score descending", () => {
   for (let i = 1; i < results.length; i++) {
     assert(
       results[i - 1].score >= results[i].score,
-      `Results should be sorted descending: ${results[i - 1].score} >= ${results[i].score}`,
+      `Results should be sorted descending: ${results[i - 1].score} >= ${
+        results[i].score
+      }`,
     );
   }
 });
@@ -271,7 +280,10 @@ Deno.test("HNSW - search still works after deleting entry point", () => {
 
   // Search should still function
   const results = index.search(vecs[1], 5);
-  assert(results.length > 0, "Search should return results after entry point deletion");
+  assert(
+    results.length > 0,
+    "Search should return results after entry point deletion",
+  );
 });
 
 // ──────────────────── Clear ────────────────────
@@ -327,12 +339,15 @@ Deno.test("HNSW - handles 500 vectors with reasonable recall", () => {
   for (const [id, v] of vectors) {
     let dot = 0;
     for (let i = 0; i < DIM; i++) dot += v[i] * query[i];
-    if (dot > bestDot) { bestDot = dot; bestId = id; }
+    if (dot > bestDot) {
+      bestDot = dot;
+      bestId = id;
+    }
   }
 
   // HNSW should find the true nearest neighbor in top-5
   const results = index.search(query, 5);
-  const foundIds = results.map(r => r.id);
+  const foundIds = results.map((r) => r.id);
   assert(
     foundIds.includes(bestId),
     `True nearest neighbor '${bestId}' should be in top-5 HNSW results`,
@@ -348,6 +363,9 @@ Deno.test("HNSW - scores are valid cosine similarities in [-1, 1]", () => {
 
   const results = index.search(randomVec(), 10);
   for (const r of results) {
-    assert(r.score >= -1 && r.score <= 1, `Score ${r.score} should be in [-1, 1]`);
+    assert(
+      r.score >= -1 && r.score <= 1,
+      `Score ${r.score} should be in [-1, 1]`,
+    );
   }
 });

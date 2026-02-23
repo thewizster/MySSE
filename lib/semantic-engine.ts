@@ -29,6 +29,51 @@ export interface SearchResult extends Document {
   score: number;
 }
 
+/**
+ * Context object threaded through `beforeSearch` / `afterSearch` hooks.
+ * A Power may set `shortCircuit` to bypass core search (e.g. cache hit).
+ */
+export interface SearchContext {
+  query: string;
+  topK: number;
+  shortCircuit?: SearchResult[];
+}
+
+/**
+ * A Power is a plain object with named hooks that SemanticEngine calls at
+ * key pipeline points. Register with `engine.use(power)`, remove with
+ * `engine.eject(name)`. Zero Powers registered = zero overhead.
+ */
+export interface Power {
+  /** Unique identifier used by `eject()` and the status endpoint */
+  name: string;
+  /** Transform / enrich documents before embedding */
+  beforeAdd?(docs: Document[]): Promise<Document[]> | Document[];
+  /** Notification after documents are indexed */
+  afterAdd?(docs: Document[]): Promise<void> | void;
+  /**
+   * Inspect / modify the query, or set `shortCircuit` to bypass core search.
+   * Short-circuiting the first Power that sets it stops the chain.
+   */
+  beforeSearch?(
+    ctx: SearchContext,
+  ): Promise<SearchContext> | SearchContext;
+  /** Re-rank, filter, or enrich results */
+  afterSearch?(
+    results: SearchResult[],
+    query: string,
+  ): Promise<SearchResult[]> | SearchResult[];
+  /**
+   * Override the embedding model. When multiple Powers define `embed`,
+   * the last registered one wins (not chainable).
+   */
+  embed?(texts: string[]): Promise<Float32Array[]>;
+  /** Cleanup when a document is deleted */
+  onDelete?(id: string): Promise<void> | void;
+  /** Cleanup when the entire index is cleared */
+  onClear?(): Promise<void> | void;
+}
+
 /** Optional tuning knobs for the HNSW index */
 export interface ANNOptions {
   /** Use approximate nearest-neighbor search when doc count > annThreshold (default: true) */
@@ -187,6 +232,9 @@ class SemanticEngine {
   private readonly efSearch: number;
   private hnsw: HNSW | null = null;
 
+  // Powers registry
+  private _powers: Power[] = [];
+
   private constructor(options?: ANNOptions) {
     this.model = new SimpleEmbeddingModel();
     this.useANN = options?.useANN ?? true;
@@ -209,6 +257,51 @@ class SemanticEngine {
     SemanticEngine.instance = undefined as unknown as SemanticEngine;
   }
 
+  // ── Power management ──────────────────────────────────────────────────
+
+  /**
+   * Register a Power. Throws if a Power with the same name is already registered.
+   */
+  use(power: Power): void {
+    if (this._powers.some((p) => p.name === power.name)) {
+      throw new Error(`Power "${power.name}" is already registered`);
+    }
+    this._powers.push(power);
+  }
+
+  /**
+   * Remove a registered Power by name.
+   * @returns `true` if found and removed, `false` if not found.
+   */
+  eject(name: string): boolean {
+    const idx = this._powers.findIndex((p) => p.name === name);
+    if (idx === -1) return false;
+    this._powers.splice(idx, 1);
+    return true;
+  }
+
+  /** Names of currently registered Powers (read-only). */
+  get powers(): readonly string[] {
+    return this._powers.map((p) => p.name);
+  }
+
+  /**
+   * Returns the embedder to use: the last registered Power that defines `embed`,
+   * or the default SimpleEmbeddingModel if none do.
+   */
+  private _resolveEmbedder(): {
+    embed(texts: string[]): Promise<Float32Array[]>;
+  } {
+    for (let i = this._powers.length - 1; i >= 0; i--) {
+      if (this._powers[i].embed) {
+        return this._powers[i] as {
+          embed(texts: string[]): Promise<Float32Array[]>;
+        };
+      }
+    }
+    return this.model;
+  }
+
   // ── HNSW lifecycle ────────────────────────────────────────────────────
 
   private ensureHNSW(): HNSW {
@@ -223,20 +316,26 @@ class SemanticEngine {
     return this.useANN && this.docs.size > this.annThreshold;
   }
 
-  // ── Public API (unchanged signatures) ─────────────────────────────────
+  // ── Public API ────────────────────────────────────────────────────────
 
   /**
    * Add documents to the in-memory index.
-   * Documents are embedded, stored, and (when ANN is enabled) inserted into the HNSW graph.
+   * Runs `beforeAdd` → embed → store/HNSW → `afterAdd` Power hooks.
    */
   async add(documents: Document[]): Promise<void> {
     if (documents.length === 0) return;
 
-    const texts = documents.map((d) => d.content);
-    const embeddings = await this.model.embed(texts);
+    // beforeAdd chain
+    let docs = documents;
+    for (const power of this._powers) {
+      if (power.beforeAdd) docs = await power.beforeAdd(docs);
+    }
 
-    for (let i = 0; i < documents.length; i++) {
-      const doc = documents[i];
+    const texts = docs.map((d) => d.content);
+    const embeddings = await this._resolveEmbedder().embed(texts);
+
+    for (let i = 0; i < docs.length; i++) {
+      const doc = docs[i];
       const embedding = embeddings[i];
 
       this.docs.set(doc.id, {
@@ -259,13 +358,18 @@ class SemanticEngine {
       }
     }
 
+    // afterAdd notifications (fire-and-forget semantics — powers rebuild state here)
+    for (const power of this._powers) {
+      if (power.afterAdd) await power.afterAdd(docs);
+    }
+
     console.log(
-      `✅ Added ${documents.length} documents. Total: ${this.docs.size}`,
+      `✅ Added ${docs.length} documents. Total: ${this.docs.size}`,
     );
   }
 
   /**
-   * Semantic search — delegates to HNSW or brute-force depending on index size and config.
+   * Semantic search — runs `beforeSearch` → core brute-force/HNSW → `afterSearch` hooks.
    *
    * When brute-force: exact cosine similarity, O(n·d)
    * When HNSW:        approximate, O(log n · d), recall@10 ≥ 0.92 typical
@@ -273,12 +377,32 @@ class SemanticEngine {
   async search(query: string, topK: number = 10): Promise<SearchResult[]> {
     if (this.docs.size === 0) return [];
 
-    const [queryVec] = await this.model.embed([query]);
-
-    if (this.shouldUseANN()) {
-      return this.searchANN(queryVec, topK);
+    // beforeSearch chain — a Power may short-circuit by setting ctx.shortCircuit
+    let ctx: SearchContext = { query, topK };
+    for (const power of this._powers) {
+      if (power.beforeSearch) {
+        ctx = await power.beforeSearch(ctx);
+        if (ctx.shortCircuit) return ctx.shortCircuit;
+      }
     }
-    return this.searchBruteForce(queryVec, topK);
+
+    const [queryVec] = await this._resolveEmbedder().embed([ctx.query]);
+
+    let results: SearchResult[];
+    if (this.shouldUseANN()) {
+      results = this.searchANN(queryVec, ctx.topK);
+    } else {
+      results = this.searchBruteForce(queryVec, ctx.topK);
+    }
+
+    // afterSearch chain
+    for (const power of this._powers) {
+      if (power.afterSearch) {
+        results = await power.afterSearch(results, ctx.query);
+      }
+    }
+
+    return results;
   }
 
   private searchBruteForce(
@@ -316,11 +440,15 @@ class SemanticEngine {
 
   /**
    * Clear all documents and the HNSW index.
+   * Fires `onClear` on each registered Power.
    */
-  clear(): void {
+  async clear(): Promise<void> {
     this.docs.clear();
     this.hnsw?.clear();
     this.hnsw = null;
+    for (const power of this._powers) {
+      if (power.onClear) await power.onClear();
+    }
     console.log("🗑️ Index cleared");
   }
 
@@ -340,12 +468,15 @@ class SemanticEngine {
 
   /**
    * Delete a document by ID.
-   * Removes from both the doc store and the HNSW index.
+   * Removes from both the doc store and the HNSW index, then fires `onDelete` hooks.
    */
-  delete(id: string): boolean {
+  async delete(id: string): Promise<boolean> {
     const existed = this.docs.delete(id);
     if (existed) {
       this.hnsw?.delete(id);
+      for (const power of this._powers) {
+        if (power.onDelete) await power.onDelete(id);
+      }
     }
     return existed;
   }
@@ -376,9 +507,10 @@ class SemanticEngine {
 
   /**
    * Import a previously exported index.
-   * Rebuilds the HNSW graph from the imported vectors.
+   * Rebuilds the HNSW graph from the imported vectors, then fires `afterAdd` hooks
+   * so Powers (e.g. HybridSearch) can rebuild their auxiliary state.
    */
-  fromJSON(
+  async fromJSON(
     data: Array<
       [
         string,
@@ -389,11 +521,12 @@ class SemanticEngine {
         },
       ]
     >,
-  ): void {
+  ): Promise<void> {
     this.docs.clear();
     this.hnsw?.clear();
     this.hnsw = null;
 
+    const importedDocs: Document[] = [];
     for (const [id, doc] of data) {
       const embedding = new Float32Array(doc.embedding);
       this.docs.set(id, {
@@ -402,10 +535,18 @@ class SemanticEngine {
         embedding,
       });
 
+      importedDocs.push({ id, content: doc.content, metadata: doc.metadata });
+
       if (this.useANN) {
         this.ensureHNSW().add(id, embedding);
       }
     }
+
+    // Notify Powers so they can rebuild auxiliary state
+    for (const power of this._powers) {
+      if (power.afterAdd) await power.afterAdd(importedDocs);
+    }
+
     console.log(`📥 Imported ${this.docs.size} documents`);
   }
 }
@@ -413,5 +554,5 @@ class SemanticEngine {
 // Export singleton instance (default config: ANN enabled, threshold 2000)
 export const engine = SemanticEngine.getInstance();
 
-// Export class + types for tests that need custom config
+// Export class for tests that need custom config
 export { SemanticEngine };
