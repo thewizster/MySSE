@@ -22,45 +22,7 @@ function assertEquals<T>(actual: T, expected: T, msg?: string): void {
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
-/** Deterministic seeded PRNG (xorshift32) for reproducible tests */
-function xorshift32(seed: number): () => number {
-  let s = seed | 0 || 1;
-  return () => {
-    s ^= s << 13;
-    s ^= s >> 17;
-    s ^= s << 5;
-    return (s >>> 0) / 0xFFFFFFFF;
-  };
-}
 
-/** Generate a unit-normalized random 384-dim vector from a seeded PRNG */
-function randomVec384(rng: () => number): Float32Array {
-  const v = new Float32Array(384);
-  let mag = 0;
-  for (let i = 0; i < 384; i++) {
-    v[i] = rng() - 0.5;
-    mag += v[i] * v[i];
-  }
-  mag = Math.sqrt(mag);
-  for (let i = 0; i < 384; i++) v[i] /= mag;
-  return v;
-}
-
-/** Brute-force top-k by cosine similarity (dot product on unit vectors) */
-function bruteForceTopK(
-  query: Float32Array,
-  vectors: Map<string, Float32Array>,
-  k: number,
-): string[] {
-  const scored: { id: string; dot: number }[] = [];
-  for (const [id, vec] of vectors) {
-    let dot = 0;
-    for (let i = 0; i < vec.length; i++) dot += vec[i] * query[i];
-    scored.push({ id, dot });
-  }
-  scored.sort((a, b) => b.dot - a.dot);
-  return scored.slice(0, k).map((s) => s.id);
-}
 
 // ── Tests ────────────────────────────────────────────────────────────────
 
@@ -70,9 +32,7 @@ Deno.test("SemanticEngine ANN - recall@10 ≥ 0.92 on 5000-doc dataset", async (
   const eng = SemanticEngine.getInstance({ useANN: true, annThreshold: 100 });
   await eng.clear();
 
-  const rng = xorshift32(42);
   const N = 5000;
-  const vectors = new Map<string, Float32Array>();
 
   // Build documents with pre-determined embeddings.
   // We bypass the embedding model by giving unique content per doc — the simple

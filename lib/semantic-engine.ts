@@ -567,14 +567,15 @@ class SemanticEngine {
 // existing instance. Consumers should call SemanticEngine.getInstance(options)
 // explicitly to control configuration.
 //
-// For backward compatibility, a lazy getter is provided:
-let _lazyEngine: SemanticEngine | undefined;
+// For backward compatibility, a default getter is provided that delegates
+// directly to the class-level singleton. This avoids maintaining a separate
+// module-level cache that could become stale if `resetInstance()` is used.
 export function getDefaultEngine(): SemanticEngine {
-  if (!_lazyEngine) {
-    _lazyEngine = SemanticEngine.getInstance();
-  }
-  return _lazyEngine;
+  return SemanticEngine.getInstance();
 }
+
+// Backward-compatible singleton export for existing imports: `import { engine } ...`  
+export const engine = getDefaultEngine();
 
 // Export class for custom config
 export { SemanticEngine };
