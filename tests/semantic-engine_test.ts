@@ -1,5 +1,6 @@
 // tests/semantic-engine_test.ts
-import { engine } from "../lib/semantic-engine.ts";
+import { getDefaultEngine } from "../lib/semantic-engine.ts";
+const engine = getDefaultEngine();
 
 // Simple assertion helpers (no external deps)
 function assertEquals<T>(actual: T, expected: T, msg?: string): void {
