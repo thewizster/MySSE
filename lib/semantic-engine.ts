@@ -86,6 +86,12 @@ export interface ANNOptions {
   efConstruction?: number;
   /** Beam width during search (default: 64, higher = better recall, slower query) */
   efSearch?: number;
+  /**
+   * Embedding vector dimensionality used by HNSW.
+   * Defaults to 384 (all-MiniLM-L6-v2).
+   * Set to match your embedding model (e.g. 768 for nomic-embed-text).
+   */
+  dimension?: number;
 }
 
 interface StoredDocument {
@@ -230,6 +236,7 @@ class SemanticEngine {
   private readonly hnswM: number;
   private readonly efConstruction: number;
   private readonly efSearch: number;
+  private readonly dim: number;
   private hnsw: HNSW | null = null;
 
   // Powers registry
@@ -242,6 +249,7 @@ class SemanticEngine {
     this.hnswM = options?.m ?? 16;
     this.efConstruction = options?.efConstruction ?? 40;
     this.efSearch = options?.efSearch ?? 64;
+    this.dim = options?.dimension ?? EMBEDDING_DIM;
   }
 
   /** Get (or create) the singleton. Options are applied only on first call. */
@@ -306,7 +314,7 @@ class SemanticEngine {
 
   private ensureHNSW(): HNSW {
     if (!this.hnsw) {
-      this.hnsw = new HNSW(EMBEDDING_DIM, this.hnswM);
+      this.hnsw = new HNSW(this.dim, this.hnswM);
     }
     return this.hnsw;
   }
@@ -551,8 +559,22 @@ class SemanticEngine {
   }
 }
 
-// Export singleton instance (default config: ANN enabled, threshold 2000)
-export const engine = SemanticEngine.getInstance();
+// ⚠️ REMOVED module-level singleton creation.
+// The previous `export const engine = SemanticEngine.getInstance();` eagerly
+// created a singleton with default options (dimension: 384, useANN: true) at
+// module-load time. This silently ignored caller-specified options (e.g.,
+// dimension: 768 for nomic-embed-text) because getInstance() returns the
+// existing instance. Consumers should call SemanticEngine.getInstance(options)
+// explicitly to control configuration.
+//
+// For backward compatibility, a lazy getter is provided:
+let _lazyEngine: SemanticEngine | undefined;
+export function getDefaultEngine(): SemanticEngine {
+  if (!_lazyEngine) {
+    _lazyEngine = SemanticEngine.getInstance();
+  }
+  return _lazyEngine;
+}
 
-// Export class for tests that need custom config
+// Export class for custom config
 export { SemanticEngine };
