@@ -8,15 +8,6 @@ function assertEquals<T>(actual: T, expected: T, msg?: string): void {
   }
 }
 
-function _assertExists<T>(
-  value: T,
-  msg?: string,
-): asserts value is NonNullable<T> {
-  if (value === null || value === undefined) {
-    throw new Error(msg ?? `Expected value to exist but got ${value}`);
-  }
-}
-
 function assertThrows(fn: () => void, msg?: string): void {
   try {
     fn();
