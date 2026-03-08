@@ -21,7 +21,7 @@ minimalist, elegant, blazing-fast, and built for 2026+.
   without touching core code
 - **Type-Safe**: Pure TypeScript end-to-end, zero external dependencies
 - **Secure**: Deno's secure-by-default runtime
-- **Minimal**: ~550 LOC core engine + ~350 LOC Powers, JSON API
+- **Minimal**: ~720 LOC core engine + ~310 LOC Powers, JSON API
 
 ## 🚀 Quick Start
 
@@ -112,8 +112,8 @@ Removes all documents from the index.
 ```
 MySSE/
 ├── lib/
-│   ├── hnsw.ts               # HNSW approximate nearest-neighbor index (~200 LOC)
-│   ├── semantic-engine.ts     # Core semantic search engine (~350 LOC)
+│   ├── hnsw.ts               # HNSW approximate nearest-neighbor index (~210 LOC)
+│   ├── semantic-engine.ts     # Core semantic search engine (~510 LOC)
 │   └── powers/                # Extensibility plugins
 │       ├── cache.ts           # QueryCache — search result caching
 │       ├── embedding-swap.ts  # EmbeddingSwap — hot-swap embedding models
@@ -122,8 +122,8 @@ MySSE/
 ├── tests/
 │   ├── hnsw_test.ts                   # HNSW unit tests (19 tests)
 │   ├── semantic-engine_test.ts        # Engine unit tests (7 tests)
-│   ├── semantic-engine-ann_test.ts    # ANN integration tests (7 tests)
-│   └── powers_test.ts                # Powers unit tests
+│   ├── semantic-engine-ann_test.ts    # ANN integration tests (8 tests)
+│   └── powers_test.ts                # Powers unit tests (20 tests)
 ├── main.ts                   # HTTP server with routing & UI
 ├── deno.json                 # Deno configuration
 └── README.md
@@ -136,7 +136,7 @@ MySSE/
 3. **Storage**: Embeddings stored as `Float32Array` for cache-friendly access
 4. **Indexing**: Vectors are inserted into an HNSW graph (built incrementally on
    `add()`)
-5. **Search**: Under 2 000 docs → exact brute-force dot product; above → HNSW
+5. **Search**: Under 2000 docs → exact brute-force dot product; above → HNSW
    approximate search with O(log n) query time
 
 ### HNSW Index
@@ -305,6 +305,23 @@ const logger: Power = {
 engine.use(logger);
 ```
 
+### Persistence (toJSON / fromJSON)
+
+The engine supports exporting and importing its full state for persistence
+(e.g. to Deno KV or a JSON file). The HNSW index is rebuilt automatically on
+import, and `afterAdd` hooks fire so Powers like HybridSearch can rebuild
+auxiliary state.
+
+```ts
+// Export
+const snapshot = engine.toJSON();
+await Deno.writeTextFile("index.json", JSON.stringify(snapshot));
+
+// Import
+const data = JSON.parse(await Deno.readTextFile("index.json"));
+await engine.fromJSON(data);
+```
+
 ### Performance
 
 | Metric                 | Value                                 |
@@ -332,7 +349,8 @@ deno task test     # Run tests
 - **Multi-Modal**: Swap to CLIP model for image+text embeddings via
   EmbeddingSwap
 - **Quantization**: Enable `quantized: true` for smaller model footprint
-- **Persistence**: Serialize to Deno KV or JSON file
+- **Persistence**: Expand `toJSON` / `fromJSON` with streaming and Deno KV
+  adapters
 - **Community Powers**: Build and share your own Powers — logging,
   rate-limiting, A/B testing, result enrichment, and more
 
