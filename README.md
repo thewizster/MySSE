@@ -175,15 +175,15 @@ Powers are registered there is zero overhead.
 
 The engine runs each hook in registration order at the appropriate point:
 
-| Hook            | When it runs                          | Typical use                          |
-| --------------- | ------------------------------------- | ------------------------------------ |
-| `beforeAdd`     | Before documents are embedded         | Transform or enrich documents        |
-| `afterAdd`      | After documents are stored and indexed| Build auxiliary indexes (e.g. BM25)  |
-| `beforeSearch`  | Before the core search runs           | Rewrite queries, return cached results |
-| `afterSearch`   | After results are returned            | Re-rank, filter, or fuse results     |
-| `embed`         | Replaces the default embedding model  | Plug in a real ML model at runtime   |
-| `onDelete`      | After a document is deleted           | Clean up auxiliary state             |
-| `onClear`       | After the entire index is cleared     | Reset auxiliary state                |
+| Hook           | When it runs                           | Typical use                            |
+| -------------- | -------------------------------------- | -------------------------------------- |
+| `beforeAdd`    | Before documents are embedded          | Transform or enrich documents          |
+| `afterAdd`     | After documents are stored and indexed | Build auxiliary indexes (e.g. BM25)    |
+| `beforeSearch` | Before the core search runs            | Rewrite queries, return cached results |
+| `afterSearch`  | After results are returned             | Re-rank, filter, or fuse results       |
+| `embed`        | Replaces the default embedding model   | Plug in a real ML model at runtime     |
+| `onDelete`     | After a document is deleted            | Clean up auxiliary state               |
+| `onClear`      | After the entire index is cleared      | Reset auxiliary state                  |
 
 ### Built-in Powers
 
@@ -197,28 +197,28 @@ instantly from memory.
 ```ts
 import { QueryCache } from "./lib/powers/cache.ts";
 
-engine.use(QueryCache());                     // defaults: 100 entries, 60 s TTL
-engine.use(QueryCache({ maxSize: 200, ttl: 30_000 }));  // custom settings
+engine.use(QueryCache()); // defaults: 100 entries, 60 s TTL
+engine.use(QueryCache({ maxSize: 200, ttl: 30_000 })); // custom settings
 ```
 
 #### HybridSearch
 
 Combines dense semantic retrieval with sparse BM25 keyword retrieval using
 Reciprocal Rank Fusion (RRF). This gives you the best of both worlds — semantic
-understanding *and* exact keyword matching.
+understanding _and_ exact keyword matching.
 
 ```ts
 import { HybridSearch } from "./lib/powers/hybrid-search.ts";
 
-engine.use(HybridSearch());                   // 50/50 blend (recommended)
-engine.use(HybridSearch({ alpha: 0.7 }));     // 70% semantic, 30% keyword
+engine.use(HybridSearch()); // 50/50 blend (recommended)
+engine.use(HybridSearch({ alpha: 0.7 })); // 70% semantic, 30% keyword
 ```
 
-| `alpha` value | Behaviour                       |
-| ------------- | ------------------------------- |
-| `1.0`         | Pure semantic (dense only)      |
-| `0.5`         | Equal blend (default)           |
-| `0.0`         | Pure keyword (BM25 only)        |
+| `alpha` value | Behaviour                  |
+| ------------- | -------------------------- |
+| `1.0`         | Pure semantic (dense only) |
+| `0.5`         | Equal blend (default)      |
+| `0.0`         | Pure keyword (BM25 only)   |
 
 #### MetadataFilter
 

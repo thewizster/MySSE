@@ -1,7 +1,9 @@
 // main.ts
 // Deno native HTTP server with minimal routing
 
-import { engine } from "./lib/semantic-engine.ts";
+import { getDefaultEngine } from "./lib/semantic-engine.ts";
+
+const engine = getDefaultEngine();
 
 const PORT = parseInt(Deno.env.get("PORT") ?? "8000");
 

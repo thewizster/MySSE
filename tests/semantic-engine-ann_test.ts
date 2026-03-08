@@ -34,7 +34,7 @@ function xorshift32(seed: number): () => number {
 }
 
 /** Generate a unit-normalized random 384-dim vector from a seeded PRNG */
-function randomVec384(rng: () => number): Float32Array {
+function _randomVec384(rng: () => number): Float32Array {
   const v = new Float32Array(384);
   let mag = 0;
   for (let i = 0; i < 384; i++) {
@@ -47,7 +47,7 @@ function randomVec384(rng: () => number): Float32Array {
 }
 
 /** Brute-force top-k by cosine similarity (dot product on unit vectors) */
-function bruteForceTopK(
+function _bruteForceTopK(
   query: Float32Array,
   vectors: Map<string, Float32Array>,
   k: number,
@@ -70,9 +70,9 @@ Deno.test("SemanticEngine ANN - recall@10 ≥ 0.92 on 5000-doc dataset", async (
   const eng = SemanticEngine.getInstance({ useANN: true, annThreshold: 100 });
   await eng.clear();
 
-  const rng = xorshift32(42);
+  const _rng = xorshift32(42);
   const N = 5000;
-  const vectors = new Map<string, Float32Array>();
+  const _vectors = new Map<string, Float32Array>();
 
   // Build documents with pre-determined embeddings.
   // We bypass the embedding model by giving unique content per doc — the simple
@@ -391,7 +391,10 @@ Deno.test("SemanticEngine ANN - dimension option configures HNSW vector size", a
 
   // Search should work — HNSW was created with DIM, not the default 384
   const results2 = await eng.search("doc 0", 3);
-  assert(results2.length > 0, "Search with custom dimension should return results");
+  assert(
+    results2.length > 0,
+    "Search with custom dimension should return results",
+  );
 
   eng.eject("DimTest");
   await eng.clear();

@@ -292,7 +292,7 @@ import { HybridSearch } from "./lib/powers/hybrid-search.ts";
 import { MetadataFilter } from "./lib/powers/metadata-filter.ts";
 
 engine.use(QueryCache({ ttl: 30_000 }));
-engine.use(HybridSearch({ alpha: 0.6 }));    // 60% semantic, 40% keyword
+engine.use(HybridSearch({ alpha: 0.6 })); // 60% semantic, 40% keyword
 engine.use(MetadataFilter((m) => m.published === true));
 ```
 
@@ -303,7 +303,7 @@ filters out unpublished docs → caches the result.
 
 ```ts
 // See what's registered
-console.log(engine.powers);  // ["QueryCache", "HybridSearch", "MetadataFilter"]
+console.log(engine.powers); // ["QueryCache", "HybridSearch", "MetadataFilter"]
 
 // Remove one by name
 engine.eject("MetadataFilter");

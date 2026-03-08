@@ -8,7 +8,7 @@ function assertEquals<T>(actual: T, expected: T, msg?: string): void {
   }
 }
 
-function assertExists<T>(
+function _assertExists<T>(
   value: T,
   msg?: string,
 ): asserts value is NonNullable<T> {
