@@ -140,11 +140,15 @@ with a lightweight **hash-based embedding model** that has zero external
 dependencies. It's great for getting started and for testing, but it doesn't
 capture deep semantic meaning the way a real ML model does.
 
-When you swap in a production embedding model like Transformers.js (see the
-commented-out `TransformersJsEmbedding` class in `lib/semantic-engine.ts`),
-you'll see scores in the 0.6–0.95 range and much stronger semantic matching —
-"forgot my login credentials" will rank "How to reset your password" clearly
-first.
+When you swap in a production embedding model — such as Transformers.js (see the
+commented-out `TransformersJsEmbedding` class in `lib/semantic-engine.ts`) or
+[Ollama](https://ollama.com/) with `nomic-embed-text` — you'll see scores in
+the 0.6–0.95 range and much stronger semantic matching. "forgot my login
+credentials" will rank "How to reset your password" clearly first.
+
+Swapping the model is easy thanks to the `EmbeddingSwap` power — see the
+[swap the embedding model](#quick-example--swap-the-embedding-model) example in
+the Powers section below for a step-by-step walkthrough.
 
 **Bottom line**: use the built-in embeddings for development and testing. Plug
 in a real model when you're ready for production.
@@ -280,6 +284,40 @@ engine.use(QueryCache({ maxSize: 200, ttl: 30_000 }));
 ```
 
 That's it — every `engine.search()` call now checks the cache first.
+
+### Quick example — swap the embedding model
+
+The built-in embedding model is great for development, but for production you'll
+want a real ML model. The `EmbeddingSwap` power lets you hot-swap the model in a
+few lines. Here's how to plug in [Ollama](https://ollama.com/) with
+`nomic-embed-text`:
+
+1. **Install Ollama** and pull the model:
+
+```bash
+# Install from https://ollama.com, then:
+ollama pull nomic-embed-text
+```
+
+2. **Register the power:**
+
+```ts
+import { engine } from "./lib/semantic-engine.ts";
+import { EmbeddingSwap } from "./lib/powers/embedding-swap.ts";
+
+engine.use(EmbeddingSwap(async (texts) => {
+  const res = await fetch("http://localhost:11434/api/embed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "nomic-embed-text", input: texts }),
+  });
+  const { embeddings } = await res.json();
+  return embeddings.map((e: number[]) => new Float32Array(e));
+}));
+```
+
+That's it — all indexing and searching now uses `nomic-embed-text`. You'll see
+scores jump into the 0.6–0.95 range and much stronger semantic matching.
 
 ### Stack multiple Powers
 
