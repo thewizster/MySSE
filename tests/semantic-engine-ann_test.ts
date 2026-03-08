@@ -356,3 +356,44 @@ Deno.test("SemanticEngine ANN - fromJSON rebuilds HNSW index", async () => {
   await eng.clear();
   SemanticEngine.resetInstance();
 });
+
+Deno.test("SemanticEngine ANN - dimension option configures HNSW vector size", async () => {
+  SemanticEngine.resetInstance();
+  const DIM = 8;
+  const eng = SemanticEngine.getInstance({
+    useANN: true,
+    annThreshold: 1, // force HNSW usage
+    dimension: DIM,
+  });
+  await eng.clear();
+
+  // Register a mock embedder that produces DIM-dimensional unit vectors
+  eng.use({
+    name: "DimTest",
+    embed(texts: string[]): Promise<Float32Array[]> {
+      return Promise.resolve(
+        texts.map((_, idx) => {
+          const v = new Float32Array(DIM);
+          v[idx % DIM] = 1; // one-hot
+          return v;
+        }),
+      );
+    },
+  });
+
+  // Add enough documents to exceed the threshold and trigger HNSW
+  const docs = [];
+  for (let i = 0; i < 5; i++) {
+    docs.push({ id: `dim${i}`, content: `doc ${i}` });
+  }
+  await eng.add(docs);
+  assertEquals(eng.size, 5);
+
+  // Search should work — HNSW was created with DIM, not the default 384
+  const results2 = await eng.search("doc 0", 3);
+  assert(results2.length > 0, "Search with custom dimension should return results");
+
+  eng.eject("DimTest");
+  await eng.clear();
+  SemanticEngine.resetInstance();
+});
