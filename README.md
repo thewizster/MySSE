@@ -187,13 +187,38 @@ The HNSW implementation follows the original 2016 paper:
 The engine uses a pluggable embedding interface:
 
 - **SimpleEmbeddingModel** (default): Hash-based embeddings for zero-dependency
-  operation
-- **TransformersJsEmbedding** (production): Swap in `@huggingface/transformers`
-  for state-of-the-art embeddings
+  operation. Great for development and testing.
+- **Ollama + nomic-embed-text** (recommended): Run
+  [nomic-embed-text](https://ollama.com/library/nomic-embed-text) locally via
+  [Ollama](https://ollama.com/) for production-quality 768-dim embeddings.
+  Scores jump to the 0.6–0.95 range with much stronger semantic matching.
+- **TransformersJsEmbedding**: Swap in `@huggingface/transformers` for
+  in-process ML embeddings without a separate server.
 
-You can swap the embedding model at runtime using the **EmbeddingSwap** Power
-(see Powers below) or by uncommenting the `TransformersJsEmbedding` class in
-[lib/semantic-engine.ts](lib/semantic-engine.ts).
+Swap the model at runtime using the **EmbeddingSwap** Power — no restart needed:
+
+```bash
+# Install Ollama (https://ollama.com), then pull the model:
+ollama pull nomic-embed-text
+```
+
+```ts
+import { engine } from "./lib/semantic-engine.ts";
+import { EmbeddingSwap } from "./lib/powers/embedding-swap.ts";
+
+engine.use(EmbeddingSwap(async (texts) => {
+  const res = await fetch("http://localhost:11434/api/embed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "nomic-embed-text", input: texts }),
+  });
+  const { embeddings } = await res.json();
+  return embeddings.map((e: number[]) => new Float32Array(e));
+}));
+```
+
+All indexing and searching will now use `nomic-embed-text`. See the
+[Getting Started guide](GETTING-STARTED.md) for a full walkthrough.
 
 ## ⚡ Powers (Plugin System)
 
