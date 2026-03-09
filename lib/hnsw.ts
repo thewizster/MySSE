@@ -10,7 +10,8 @@
 // lib/hnsw.ts  —  pure TS HNSW (cosine distance on unit vectors)
 // Follows Malkov & Yashunin 2016, Algorithms 1–5
 
-type Vector = Float32Array;
+/** A dense floating-point vector (alias for `Float32Array`). */
+export type Vector = Float32Array;
 type Neighbor = { id: string; dist: number };
 
 const DEFAULT_M = 16; // max connections per layer (paper §4.1, suggests 5–48)
@@ -57,12 +58,12 @@ export class HNSW {
     this.mL = 1 / Math.log(m);
   }
 
-  // Paper Algorithm 1, line 4
+  /** Draw a random level for a new node (Paper Algorithm 1, line 4). */
   private randomLevel(): number {
     return Math.floor(-Math.log(Math.random()) * this.mL);
   }
 
-  // Algorithm 3: SELECT-NEIGHBORS-SIMPLE
+  /** Select the `k` closest candidates (Algorithm 3: SELECT-NEIGHBORS-SIMPLE). */
   private selectNeighborsSimple(
     _query: Vector,
     candidates: Neighbor[],
@@ -72,7 +73,7 @@ export class HNSW {
     return candidates.slice(0, k).map((c) => c.id);
   }
 
-  // Algorithm 2: SEARCH-LAYER
+  /** Greedy beam search within a single graph layer (Algorithm 2: SEARCH-LAYER). */
   private searchLayer(
     q: Vector,
     ep: string[],
@@ -116,7 +117,7 @@ export class HNSW {
     return found;
   }
 
-  // Shrink a node's neighbor list if it exceeds M_max  (Paper Alg 1, lines 12–17)
+  /** Shrink a node's neighbor list if it exceeds M_max (Paper Alg 1, lines 12–17). */
   private shrinkNeighbors(nodeId: string, layer: number): void {
     const maxConn = layer === 0 ? this.mMax0 : this.mMax;
     const neighbors = this.layers.get(nodeId)?.[layer];

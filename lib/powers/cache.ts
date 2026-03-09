@@ -16,6 +16,7 @@ interface CacheEntry {
   expires: number;
 }
 
+/** Options for the {@link QueryCache} Power. */
 export interface QueryCacheOptions {
   /** Maximum number of cached queries (default: 100). FIFO eviction when full. */
   maxSize?: number;

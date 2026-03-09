@@ -54,8 +54,11 @@ export interface SearchResult extends Document {
  * A Power may set `shortCircuit` to bypass core search (e.g. cache hit).
  */
 export interface SearchContext {
+  /** The user's search query string. */
   query: string;
+  /** Maximum number of results to return. */
   topK: number;
+  /** When set by a Power, bypasses core search and returns these results directly. */
   shortCircuit?: SearchResult[];
 }
 
@@ -348,6 +351,7 @@ class SemanticEngine {
 
   // ── HNSW lifecycle ────────────────────────────────────────────────────
 
+  /** Lazily create the HNSW index if it doesn't exist yet. */
   private ensureHNSW(): HNSW {
     if (!this.hnsw) {
       this.hnsw = new HNSW(this.dim, this.hnswM);
@@ -449,6 +453,7 @@ class SemanticEngine {
     return results;
   }
 
+  /** Exact cosine-similarity search over all documents — O(n·d). */
   private searchBruteForce(
     queryVec: Float32Array,
     topK: number,
@@ -467,6 +472,7 @@ class SemanticEngine {
     return results.slice(0, topK);
   }
 
+  /** Approximate nearest-neighbor search via HNSW — O(log n · d). */
   private searchANN(queryVec: Float32Array, topK: number): SearchResult[] {
     const idx = this.ensureHNSW();
     const hits = idx.search(queryVec, topK, this.efSearch);
