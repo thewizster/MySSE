@@ -1,3 +1,14 @@
+/**
+ * HybridSearch Power — maintains a BM25 inverted keyword index alongside
+ * the engine's dense vector index and fuses both ranked lists via
+ * Reciprocal Rank Fusion (RRF).
+ *
+ * BM25: Robertson & Zaragoza 2009 |
+ * RRF: Cormack, Clarke & Buettcher 2009 (k=60 conventional default)
+ *
+ * @module
+ */
+
 // lib/powers/hybrid-search.ts
 // HybridSearch Power — maintains a BM25 inverted keyword index alongside the
 // engine's dense vector index and fuses both ranked lists via Reciprocal Rank

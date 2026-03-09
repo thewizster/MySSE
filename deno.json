@@ -1,9 +1,34 @@
 {
+  "name": "@wxt/my-search-engine",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./mod.ts",
+    "./engine": "./lib/semantic-engine.ts",
+    "./hnsw": "./lib/hnsw.ts",
+    "./powers/cache": "./lib/powers/cache.ts",
+    "./powers/embedding-swap": "./lib/powers/embedding-swap.ts",
+    "./powers/hybrid-search": "./lib/powers/hybrid-search.ts",
+    "./powers/metadata-filter": "./lib/powers/metadata-filter.ts"
+  },
+  "publish": {
+    "include": [
+      "LICENSE",
+      "README.md",
+      "mod.ts",
+      "lib/**/*.ts"
+    ],
+    "exclude": [
+      "tests/"
+    ]
+  },
   "tasks": {
     "check": "deno fmt --check && deno lint && deno check **/*.ts",
     "dev": "deno run -A --watch main.ts",
     "start": "deno run -A main.ts",
-    "test": "deno test -A"
+    "test": "deno test -A",
+    "publish": "deno publish",
+    "publish:dry": "deno publish --dry-run"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]

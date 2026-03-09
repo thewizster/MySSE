@@ -1,3 +1,17 @@
+/**
+ * In-RAM Semantic Search Engine — 100% memory-based, no external DB, no
+ * disk I/O during queries.
+ *
+ * Provides the core {@link SemanticEngine} class with automatic mode switching
+ * between brute-force (exact, ≤2 000 docs) and HNSW approximate
+ * nearest-neighbor search (≥92% recall\@10, >2 000 docs).
+ *
+ * Extend behaviour with the {@link Power} plugin interface for caching,
+ * hybrid search, metadata filtering, and custom embedding models.
+ *
+ * @module
+ */
+
 // lib/semantic-engine.ts
 // In-RAM Semantic Search Engine
 // 100% memory-based, no external DB, no disk I/O during queries.
@@ -17,7 +31,7 @@
 //
 // ─────────────────────────────────────────────────────────────────────────
 
-import HNSW from "./hnsw.ts";
+import { HNSW } from "./hnsw.ts";
 
 export interface Document {
   id: string;
@@ -575,7 +589,7 @@ export function getDefaultEngine(): SemanticEngine {
 }
 
 // Backward-compatible singleton export for existing imports: `import { engine } ...`  
-export const engine = getDefaultEngine();
+export const engine: SemanticEngine = getDefaultEngine();
 
 // Export class for custom config
 export { SemanticEngine };

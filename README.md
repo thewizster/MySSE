@@ -1,5 +1,8 @@
 # MySSE - My Semantic Search Engine
 
+[![JSR](https://jsr.io/badges/@wxt/my-search-engine)](https://jsr.io/@wxt/my-search-engine)
+[![JSR Score](https://jsr.io/badges/@wxt/my-search-engine/score)](https://jsr.io/@wxt/my-search-engine)
+
 A fully in-RAM semantic search engine built with **Deno** in pure TypeScript —
 minimalist, elegant, blazing-fast, and built for 2026+.
 
@@ -24,6 +27,34 @@ minimalist, elegant, blazing-fast, and built for 2026+.
 - **Minimal**: ~720 LOC core engine + ~310 LOC Powers, JSON API
 
 ## 🚀 Quick Start
+
+### Install from JSR
+
+```ts
+// deno.json
+{
+  "imports": {
+    "@wxt/my-search-engine": "jsr:@wxt/my-search-engine@^0.1.0"
+  }
+}
+```
+
+```ts
+import { SemanticEngine, HybridSearch } from "@wxt/my-search-engine";
+
+const engine = SemanticEngine.getInstance();
+engine.use(HybridSearch());
+
+await engine.add([
+  { id: "1", content: "Deno is a secure runtime for JS and TS" },
+  { id: "2", content: "Fresh is a modern web framework for Deno" },
+]);
+
+const results = await engine.search("secure typescript runtime");
+console.log(results);
+```
+
+### Run the Demo Server
 
 ### Prerequisites
 

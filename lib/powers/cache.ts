@@ -1,3 +1,10 @@
+/**
+ * QueryCache Power — short-circuits search on cache hits, stores results
+ * after search, and invalidates the cache on clear.
+ *
+ * @module
+ */
+
 // lib/powers/cache.ts
 // QueryCache Power — short-circuits search on cache hits via beforeSearch,
 // stores results via afterSearch, and invalidates on clear.

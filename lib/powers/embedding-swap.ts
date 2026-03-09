@@ -1,3 +1,12 @@
+/**
+ * EmbeddingSwap Power — replaces the default embedding model with a
+ * caller-supplied embedding function via the `embed` hook.
+ *
+ * When multiple Powers define `embed`, the last-registered one wins.
+ *
+ * @module
+ */
+
 // lib/powers/embedding-swap.ts
 // EmbeddingSwap Power — replaces the default SimpleEmbeddingModel with a
 // caller-supplied embedding function via the embed hook.

@@ -1,3 +1,10 @@
+/**
+ * MetadataFilter Power — removes results whose metadata does not satisfy a
+ * caller-supplied predicate, via the `afterSearch` hook.
+ *
+ * @module
+ */
+
 // lib/powers/metadata-filter.ts
 // MetadataFilter Power — removes results whose metadata does not satisfy a
 // caller-supplied predicate, via the afterSearch hook.

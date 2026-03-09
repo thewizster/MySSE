@@ -1,5 +1,5 @@
 // tests/hnsw_test.ts
-import HNSW from "../lib/hnsw.ts";
+import { HNSW } from "../lib/hnsw.ts";
 
 // Simple assertion helpers (no external deps)
 function assertEquals<T>(actual: T, expected: T, msg?: string): void {

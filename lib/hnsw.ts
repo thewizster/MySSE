@@ -1,3 +1,12 @@
+/**
+ * Pure TypeScript HNSW (Hierarchical Navigable Small World) index for
+ * approximate nearest-neighbor search using cosine distance on unit vectors.
+ *
+ * Implements Malkov & Yashunin 2016, Algorithms 1–5.
+ *
+ * @module
+ */
+
 // lib/hnsw.ts  —  pure TS HNSW (cosine distance on unit vectors)
 // Follows Malkov & Yashunin 2016, Algorithms 1–5
 
@@ -13,7 +22,7 @@ function cosineDistance(a: Vector, b: Vector): number {
   return 1 - dot; // distance = 1 − similarity (smaller = closer)
 }
 
-class HNSW {
+export class HNSW {
   private layers: Map<string, Set<string>[]> = new Map(); // id → per-layer neighbor sets
   private vectors: Map<string, Vector> = new Map();
   private nodeLevel: Map<string, number> = new Map(); // id → assigned level
@@ -245,5 +254,3 @@ class HNSW {
     this.maxLayer = 0;
   }
 }
-
-export default HNSW;
