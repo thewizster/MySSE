@@ -37,14 +37,22 @@ function cosineDistance(a: Vector, b: Vector): number {
  * ```
  */
 export class HNSW {
+  /** Per-node neighbor sets, indexed by layer. */
   private layers: Map<string, Set<string>[]> = new Map();
+  /** Stored vectors keyed by ID. */
   private vectors: Map<string, Vector> = new Map();
+  /** Assigned HNSW level for each node. */
   private nodeLevel: Map<string, number> = new Map();
+  /** Current graph entry point (highest-level node). */
   private enterPoint: string | null = null;
+  /** Highest occupied layer in the graph. */
   private maxLayer = 0;
 
+  /** Max neighbor connections for layers >= 1. */
   private readonly mMax: number;
+  /** Max neighbor connections for layer 0 (2 * M). */
   private readonly mMax0: number;
+  /** Level generation multiplier 1/ln(M). */
   private readonly mL: number;
 
   /**

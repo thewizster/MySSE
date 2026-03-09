@@ -265,20 +265,29 @@ const ANN_THRESHOLD_DEFAULT = 2000;
  * ```
  */
 class SemanticEngine {
+  /** The singleton instance. */
   private static instance: SemanticEngine;
+  /** Active embedding model (default or Power-supplied). */
   private model: EmbeddingModel;
+  /** In-memory document store keyed by document ID. */
   private docs: Map<string, StoredDocument> = new Map();
 
-  // ANN configuration
+  /** Whether HNSW approximate search is enabled. */
   private readonly useANN: boolean;
+  /** Document count threshold for switching to HNSW. */
   private readonly annThreshold: number;
+  /** HNSW `M` parameter (max connections per layer). */
   private readonly hnswM: number;
+  /** HNSW construction beam width. */
   private readonly efConstruction: number;
+  /** HNSW search beam width. */
   private readonly efSearch: number;
+  /** Embedding vector dimensionality. */
   private readonly dim: number;
+  /** The HNSW index instance (lazily created). */
   private hnsw: HNSW | null = null;
 
-  // Powers registry
+  /** Registered Power plugins. */
   private _powers: Power[] = [];
 
   private constructor(options?: ANNOptions) {
