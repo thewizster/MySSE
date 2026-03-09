@@ -22,17 +22,35 @@ function cosineDistance(a: Vector, b: Vector): number {
   return 1 - dot; // distance = 1 − similarity (smaller = closer)
 }
 
+/**
+ * Hierarchical Navigable Small World (HNSW) graph index for fast
+ * approximate nearest-neighbor search over cosine distance.
+ *
+ * @example
+ * ```ts
+ * import { HNSW } from "@wxt/my-search-engine/hnsw";
+ *
+ * const index = new HNSW(384);
+ * index.add("doc1", embedding);
+ * const results = index.search(queryVec, 10);
+ * ```
+ */
 export class HNSW {
-  private layers: Map<string, Set<string>[]> = new Map(); // id → per-layer neighbor sets
+  private layers: Map<string, Set<string>[]> = new Map();
   private vectors: Map<string, Vector> = new Map();
-  private nodeLevel: Map<string, number> = new Map(); // id → assigned level
+  private nodeLevel: Map<string, number> = new Map();
   private enterPoint: string | null = null;
   private maxLayer = 0;
 
-  private readonly mMax: number; // max neighbors for layers ≥ 1
-  private readonly mMax0: number; // max neighbors for layer 0 (paper §4.1: 2·M)
-  private readonly mL: number; // level multiplier = 1/ln(M)  (paper Algorithm 1)
+  private readonly mMax: number;
+  private readonly mMax0: number;
+  private readonly mL: number;
 
+  /**
+   * Create a new HNSW index.
+   * @param dim Dimensionality of the vectors.
+   * @param m Maximum number of connections per layer (default: 16).
+   */
   constructor(private dim: number, private m: number = DEFAULT_M) {
     this.mMax = m;
     this.mMax0 = 2 * m;
@@ -117,7 +135,12 @@ export class HNSW {
     for (const id of kept) neighbors.add(id);
   }
 
-  // Algorithm 1: INSERT
+  /**
+   * Insert a vector into the index.
+   * @param id Unique identifier for the vector.
+   * @param vector Float32Array of length `dim` (should be unit-normalised).
+   * @throws If `id` already exists or `vector.length !== dim`.
+   */
   add(id: string, vector: Vector): void {
     if (vector.length !== this.dim) throw new Error("Dimension mismatch");
     if (this.vectors.has(id)) throw new Error("ID already exists");
@@ -174,7 +197,13 @@ export class HNSW {
     }
   }
 
-  // Algorithm 5: K-NN-SEARCH
+  /**
+   * Find the `k` nearest neighbors to `query`.
+   * @param query Float32Array query vector (same dimensionality as indexed vectors).
+   * @param k Number of results to return (default: 10).
+   * @param efSearch Beam width — higher values improve recall at the cost of latency (default: 64).
+   * @returns Array of `{ id, score }` sorted by descending cosine similarity.
+   */
   search(
     query: Vector,
     k = 10,
@@ -199,7 +228,11 @@ export class HNSW {
       .map((n) => ({ id: n.id, score: 1 - n.dist }));
   }
 
-  // Remove a vector from the index
+  /**
+   * Remove a vector from the index.
+   * @param id The identifier of the vector to remove.
+   * @returns `true` if the vector was found and removed, `false` otherwise.
+   */
   delete(id: string): boolean {
     if (!this.vectors.has(id)) return false;
 
@@ -242,10 +275,12 @@ export class HNSW {
     return true;
   }
 
+  /** The number of vectors currently in the index. */
   get size(): number {
     return this.vectors.size;
   }
 
+  /** Remove all vectors and reset the index to its initial empty state. */
   clear(): void {
     this.layers.clear();
     this.vectors.clear();

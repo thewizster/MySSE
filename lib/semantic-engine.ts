@@ -33,13 +33,19 @@
 
 import { HNSW } from "./hnsw.ts";
 
+/** A document to be indexed. Must have a unique `id` and textual `content`. */
 export interface Document {
+  /** Unique identifier for the document. */
   id: string;
+  /** Textual content used for embedding and search. */
   content: string;
+  /** Arbitrary key-value metadata attached to the document. */
   metadata?: Record<string, unknown>;
 }
 
+/** A search result extending {@link Document} with a relevance score. */
 export interface SearchResult extends Document {
+  /** Cosine similarity score (higher is more relevant, range roughly −1 to 1). */
   score: number;
 }
 
@@ -239,6 +245,22 @@ class TransformersJsEmbedding implements EmbeddingModel {
 
 const ANN_THRESHOLD_DEFAULT = 2000;
 
+/**
+ * In-RAM semantic search engine with automatic brute-force → HNSW switching.
+ *
+ * Use the singleton via {@link SemanticEngine.getInstance} or the pre-built
+ * {@link engine} export. Extend behaviour by registering {@link Power} plugins
+ * with {@link SemanticEngine.use}.
+ *
+ * @example
+ * ```ts
+ * import { SemanticEngine } from "@wxt/my-search-engine";
+ *
+ * const engine = SemanticEngine.getInstance({ dimension: 384 });
+ * await engine.add([{ id: "1", content: "Hello world" }]);
+ * const results = await engine.search("hello");
+ * ```
+ */
 class SemanticEngine {
   private static instance: SemanticEngine;
   private model: EmbeddingModel;
@@ -474,10 +496,16 @@ class SemanticEngine {
     console.log("🗑️ Index cleared");
   }
 
+  /** The number of documents currently stored in the index. */
   get size(): number {
     return this.docs.size;
   }
 
+  /**
+   * Retrieve a single document by ID.
+   * @param id The document identifier.
+   * @returns The document, or `undefined` if not found.
+   */
   get(id: string): Document | undefined {
     const stored = this.docs.get(id);
     if (!stored) return undefined;
@@ -584,11 +612,28 @@ class SemanticEngine {
 // For backward compatibility, a default getter is provided that delegates
 // directly to the class-level singleton. This avoids maintaining a separate
 // module-level cache that could become stale if `resetInstance()` is used.
+/**
+ * Returns the default {@link SemanticEngine} singleton.
+ *
+ * Equivalent to `SemanticEngine.getInstance()` — provided as a convenience
+ * for callers that do not need custom {@link ANNOptions}.
+ */
 export function getDefaultEngine(): SemanticEngine {
   return SemanticEngine.getInstance();
 }
 
-// Backward-compatible singleton export for existing imports: `import { engine } ...`  
+/**
+ * Pre-built default {@link SemanticEngine} singleton.
+ *
+ * Import this for quick usage without calling `getInstance()` manually.
+ *
+ * @example
+ * ```ts
+ * import { engine } from "@wxt/my-search-engine";
+ *
+ * await engine.add([{ id: "1", content: "Hello" }]);
+ * ```
+ */
 export const engine: SemanticEngine = getDefaultEngine();
 
 // Export class for custom config

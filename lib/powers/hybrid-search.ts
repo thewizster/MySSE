@@ -30,6 +30,7 @@ const RRF_K = 60;
 const MIN_CANDIDATE_K = 10;
 const CANDIDATE_MULTIPLIER = 3;
 
+/** Tuning options for the {@link HybridSearch} Power. */
 export interface HybridSearchOptions {
   /**
    * Semantic search weight in [0, 1] (default: 0.5).
