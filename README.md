@@ -1,43 +1,107 @@
-# MySSE - My Semantic Search Engine
+<div align="center">
+
+# MySSE — In-Memory Semantic Search Engine for TypeScript & Deno
 
 [![JSR](https://jsr.io/badges/@wxt/my-search-engine)](https://jsr.io/@wxt/my-search-engine)
 [![JSR Score](https://jsr.io/badges/@wxt/my-search-engine/score)](https://jsr.io/@wxt/my-search-engine)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Deno](https://img.shields.io/badge/Deno-2.0%2B-000000?logo=deno)](https://deno.land)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Pure-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-brightgreen)]()
 
-A fully in-RAM semantic search engine built with **Deno** in pure TypeScript —
-minimalist, elegant, blazing-fast, and built for 2026+.
+**A lightweight, zero-dependency vector search engine built entirely in TypeScript.**
+Add semantic search to any Deno or TypeScript project in minutes — no databases, no external services, no infrastructure.
+
+[Quick Start](#-quick-start) · [API Reference](#-api-reference) · [Powers (Plugins)](#-powers-plugin-system) · [Getting Started Guide](GETTING-STARTED.md)
+
+</div>
+
+---
 
 ![MySSE Home Page](https://github.com/user-attachments/assets/0cc9ec0e-ac94-4cd3-a0ea-11f95c89f515)
 
+## Why MySSE?
+
+Most vector search solutions require you to stand up Postgres + pgvector, run a
+Docker container for Qdrant/Milvus, or pay for a hosted service. **MySSE is the
+opposite**: import a single module and you have a working semantic search engine
+running entirely in-process — no network, no disk, no YAML.
+
+| Consideration           | MySSE                                | Typical alternatives               |
+| ----------------------- | ------------------------------------ | ---------------------------------- |
+| **Setup**               | `import { SemanticEngine } from …`   | Docker / cloud provisioning        |
+| **External services**   | None                                 | PostgreSQL, Redis, vector DB       |
+| **Dependencies**        | Zero                                 | Dozens to hundreds                 |
+| **Language**             | Pure TypeScript                      | C++/Rust with JS bindings          |
+| **Runtime**             | Deno (secure by default)             | Node.js / mixed                    |
+| **Latency** (10k docs) | ~1.5 ms (HNSW) / ~5 ms (brute-force)| Varies by network round-trip       |
+| **Embedding models**    | Pluggable — swap at runtime          | Locked at build time               |
+
+If you need a **self-contained, hackable search engine** that you can embed in a
+CLI tool, microservice, RAG pipeline, or Deno Deploy function — and you value
+simplicity over cluster-scale — MySSE is built for you.
+
+## Table of Contents
+
+- [Why MySSE?](#why-mysse)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [API Reference](#-api-reference)
+- [Architecture](#️-architecture)
+- [How It Works](#-how-it-works)
+- [Powers (Plugin System)](#-powers-plugin-system)
+- [Performance Benchmarks](#performance)
+- [Tasks](#-tasks)
+- [Use Cases](#-use-cases)
+- [Roadmap](#-roadmap)
+- [Getting Started Guide](#-getting-started-guide)
+- [Contributing](#-contributing)
+- [License](#-license)
+
 ## ✨ Features
 
-- **100% In-Memory**: No external DB, no disk I/O during queries
-- **HNSW Indexing**: Pure-TypeScript implementation of the 2016 Malkov &
-  Yashunin paper — automatic approximate nearest-neighbor search above 2 000
-  documents, exact brute-force below
-- **Adaptive Search**: Brute-force (recall = 100%) when the index is small; HNSW
-  (recall@10 ≥ 92%, 4–6× faster) when it grows — fully automatic, no config
-  needed
-- **AI-Ready**: Pluggable embedding interface (deterministic hash-based
-  included, Transformers.js ready)
-- **Powers Extensibility**: Plugin system with lifecycle hooks — add caching,
-  hybrid BM25+semantic search, metadata filtering, or custom embedding models
-  without touching core code
-- **Type-Safe**: Pure TypeScript end-to-end, zero external dependencies
-- **Secure**: Deno's secure-by-default runtime
-- **Minimal**: ~720 LOC core engine + ~310 LOC Powers, JSON API
+- **100% In-Memory Vector Search** — No external database, no disk I/O during
+  queries. All vectors live in RAM as `Float32Array` for cache-friendly access.
+- **HNSW Approximate Nearest Neighbor Index** — Pure-TypeScript implementation
+  of the 2016 Malkov & Yashunin paper. Automatic approximate nearest-neighbor
+  search above 2 000 documents, exact brute-force below.
+- **Adaptive Search Strategy** — Brute-force (recall = 100%) when the index is
+  small; HNSW (recall@10 ≥ 92%, 4–6× faster) when it grows — fully automatic,
+  no config needed.
+- **Pluggable Embedding Models** — Ship with a deterministic hash-based
+  embedder for zero-setup dev. Hot-swap to Ollama, Transformers.js, OpenAI, or
+  any custom model at runtime via the EmbeddingSwap Power.
+- **BM25 + Semantic Hybrid Search** — Built-in Reciprocal Rank Fusion (RRF)
+  blends keyword and dense retrieval for stronger results out of the box.
+- **Powers Plugin System** — Lifecycle hooks for caching, hybrid search,
+  metadata filtering, and custom embedding models — without touching core code.
+- **Pure TypeScript, Zero Dependencies** — No native bindings, no WASM, no
+  node_modules. Ships as a single JSR package.
+- **Deno Secure-by-Default** — Runs under Deno's permission system. No
+  accidental file/network access.
+- **~1 000 Lines of Code** — ~720 LOC core engine + ~310 LOC Powers. Read the
+  whole thing in an afternoon.
 
 ## 🚀 Quick Start
 
 ### Install from JSR
 
-```ts
+```bash
+deno add jsr:@wxt/my-search-engine
+```
+
+Or add it manually to your import map:
+
+```jsonc
 // deno.json
 {
   "imports": {
-    "@wxt/my-search-engine": "jsr:@wxt/my-search-engine@^0.1.0"
+    "@wxt/my-search-engine": "jsr:@wxt/my-search-engine@^0.2.0"
   }
 }
 ```
+
+### Use as a Library
 
 ```ts
 import { SemanticEngine, HybridSearch } from "@wxt/my-search-engine";
@@ -56,11 +120,11 @@ console.log(results);
 
 ### Run the Demo Server
 
-### Prerequisites
+#### Prerequisites
 
 - [Deno](https://deno.land/) 2.0 or later
 
-### Installation
+#### Installation
 
 ```bash
 # Clone the repository
@@ -71,7 +135,7 @@ cd MySSE
 deno task dev
 ```
 
-The server will start at `http://localhost:8000`.
+The server will start at `http://localhost:8000` with a built-in search UI.
 
 ## 📖 API Reference
 
@@ -380,13 +444,19 @@ await engine.fromJSON(data);
 
 ### Performance
 
+Benchmarked on a single thread with 10 000 documents and 384-dimensional
+vectors:
+
 | Metric                 | Value                                 |
 | ---------------------- | ------------------------------------- |
-| Brute-force (10k docs) | ~5 ms per query                       |
-| HNSW (10k docs)        | ~1.5 ms per query (4–6× faster)       |
+| Brute-force query      | ~5 ms per query                       |
+| HNSW query             | ~1.5 ms per query (4–6× faster)       |
 | HNSW recall@10         | ≥ 92% (typically 95–97%)              |
 | Index build (10k docs) | ~20 s (one-time, incremental on add)  |
 | Memory per vector      | ~1.5 KB (384 × 4 bytes + graph edges) |
+
+> **Tip:** For real-world latency, pair MySSE with the `QueryCache` Power so
+> repeated queries resolve in <0.1 ms.
 
 ## 🔧 Tasks
 
@@ -394,27 +464,74 @@ await engine.fromJSON(data);
 deno task dev      # Start development server with hot reload
 deno task start    # Start production server
 deno task check    # Run format, lint, and type checks
-deno task test     # Run tests
+deno task test     # Run all 54 tests (engine, HNSW, Powers)
 ```
 
-## 🔮 Future Extensions
+## 🎯 Use Cases
 
-- **Transformers.js**: Enable real ML embeddings with
+MySSE is a great fit anywhere you need **fast, embedded semantic search without
+infrastructure overhead**:
+
+- **RAG (Retrieval-Augmented Generation)** — Retrieve relevant context from your
+  knowledge base before prompting an LLM. MySSE works as the retrieval layer in
+  any RAG pipeline.
+- **Help Center / FAQ Search** — Let users ask questions in natural language and
+  surface the right article even when wording doesn't match.
+- **Chatbot Context Engine** — Feed relevant documents to a conversational AI so
+  it can answer grounded in your data.
+- **CLI & Desktop Tools** — Embed search directly in a Deno CLI app or Electron
+  tool — no server required.
+- **Note & Knowledge Base Search** — Import Markdown or text files and find
+  content by meaning, not just keywords.
+- **Product Search** — Let customers describe what they want ("lightweight
+  running shoes") instead of navigating filter trees.
+- **Deno Deploy Functions** — Stand up a serverless semantic search endpoint
+  with zero infrastructure.
+- **Prototyping & Hackathons** — Get semantic search working in minutes, then
+  swap in a production model when you're ready.
+
+## 🔮 Roadmap
+
+- **Transformers.js Integration** — Enable real in-process ML embeddings with
   `@huggingface/transformers` (or use the EmbeddingSwap Power today)
-- **WebGPU Acceleration**: Automatic GPU acceleration when available
-- **Multi-Modal**: Swap to CLIP model for image+text embeddings via
+- **WebGPU Acceleration** — Automatic GPU acceleration when available
+- **Multi-Modal Search** — Swap to CLIP model for image+text embeddings via
   EmbeddingSwap
-- **Quantization**: Enable `quantized: true` for smaller model footprint
-- **Persistence**: Expand `toJSON` / `fromJSON` with streaming and Deno KV
-  adapters
-- **Community Powers**: Build and share your own Powers — logging,
+- **Quantization** — `quantized: true` for smaller model footprint
+- **Persistence Adapters** — Expand `toJSON` / `fromJSON` with streaming and
+  Deno KV adapters
+- **Community Powers** — Build and share your own Powers — logging,
   rate-limiting, A/B testing, result enrichment, and more
 
 ## 📚 Getting Started Guide
 
-See [GETTING-STARTED.md](GETTING-STARTED.md) for a beginner-friendly walkthrough
-on adding semantic search to your project with MySSE.
+New to semantic search? The [Getting Started guide](GETTING-STARTED.md) walks
+you through everything from installing Deno to adding documents, running
+queries, swapping embedding models, and using Powers — no ML background needed.
+
+## 🤝 Contributing
+
+Contributions are welcome! Whether it's bug fixes, new Powers, documentation
+improvements, or performance optimizations — open an issue or submit a pull
+request on [GitHub](https://github.com/thewizster/MySSE).
+
+```bash
+# Clone and run the test suite
+git clone https://github.com/thewizster/MySSE.git
+cd MySSE
+deno task test    # 54 tests across engine, HNSW, and Powers
+```
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**Built with [Deno](https://deno.land/) · Published on [JSR](https://jsr.io/@wxt/my-search-engine) · Source on [GitHub](https://github.com/thewizster/MySSE)**
+
+If MySSE is useful to you, consider giving it a ⭐ on GitHub — it helps others find it.
+
+</div>
