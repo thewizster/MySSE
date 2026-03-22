@@ -1,6 +1,6 @@
 {
   "name": "@wxt/my-search-engine",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "license": "MIT",
   "exports": {
     ".": "./mod.ts",
@@ -33,5 +33,9 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
-  "exclude": ["**/node_modules/*"]
+  "exclude": ["**/node_modules/*"],
+  "keywords": ["semantic-search", "hnsw", "vector-search", "bm25", "typescript", "in-memory-search", "hybrid-search", "embedding", "approximate-nearest-neighbors", "zero-dependency"],
+  "description": "In-memory semantic search engine in pure TypeScript: HNSW indexing, hybrid BM25 + vector search, zero dependencies, pluggable Powers for caching/hybrid/metadata.",
+  "repository": "https://github.com/thewizster/MySSE",
+  "homepage": "https://github.com/thewizster/MySSE#readme"
 }
