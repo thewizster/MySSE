@@ -529,6 +529,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 ---
 
 <div align="center">
+Built with ❤️ in Texas!
 
 **Built with [Deno](https://deno.land/) · Published on [JSR](https://jsr.io/@wxt/my-search-engine) · Source on [GitHub](https://github.com/thewizster/MySSE)**
 
